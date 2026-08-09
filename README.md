@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ⚡ XII PPLG 1 - Website Kelas (Neobrutalism Edition)
 
-## Getting Started
+Selamat datang di repository website kelas **XII PPLG 1 (SMKN 1 Depok)**! Website ini dibangun murni menggunakan pendekatan **Frontend-Only** dengan bahasa desain **Neobrutalism** — desain yang berani, kasar, bayangan tebal (hard shadows), warna mencolok, dan tipografi raksasa.
 
-First, run the development server:
+---
 
+## 🛠️ Tech Stack
+
+Website ini dibangun menggunakan teknologi modern terbaru:
+- **Framework:** [Next.js 14+ (App Router)](https://nextjs.org/)
+- **Bahasa:** [TypeScript](https://www.typescriptlang.org/)
+- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
+- **Animasi:** [Framer Motion](https://www.framer.com/motion/)
+- **Font:** Space Grotesk (via `next/font/google`)
+
+---
+
+## 🚀 Getting Started (Cara Menjalankan Project)
+
+Untuk teman-teman yang mau ikut berkontribusi atau melanjutkan project ini, ikuti langkah berikut:
+
+### 1. Prerequisites
+Pastikan kamu sudah menginstall **Node.js** (rekomendasi versi 18 atau 20+) dan `npm`.
+
+### 2. Clone & Install Dependencies
+Buka terminal dan jalankan:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Clone repository ini (sesuaikan link jika sudah di-upload ke GitHub)
+# git clone <url-repo-kalian>
+
+# Masuk ke direktori project
+cd website-kelas
+
+# Install semua module dan dependency
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Jalankan Local Development Server
+```bash
+npm run dev
+```
+Buka [http://localhost:3000](http://localhost:3000) di browsermu. Setiap perubahan kode akan langsung terlihat secara *real-time* (Hot Reload).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📁 Struktur Folder Utama
 
-## Learn More
+Penting untuk mengetahui di mana letak file jika kalian ingin mengedit konten:
 
-To learn more about Next.js, take a look at the following resources:
+```text
+website-kelas/
+├── app/
+│   ├── globals.css      # Konfigurasi Tailwind v4 (@theme) & Custom Keyframes Marquee
+│   ├── layout.tsx       # Root layout, konfigurasi Font Space Grotesk, dan Metadata
+│   └── page.tsx         # Halaman Utama (Merakit semua komponen jadi satu)
+├── src/
+│   ├── components/      # Semua komponen UI terpisah (Modular)
+│   │   ├── Gallery.tsx
+│   │   ├── Hero.tsx
+│   │   ├── Navbar.tsx
+│   │   ├── Profiles.tsx # Termasuk fitur Search Filter
+│   │   └── StructureTimeline.tsx
+│   └── data/
+│       └── mockData.ts  # ⚠️ PUSAT DATA: Edit nama siswa, struktur, & foto di sini!
+└── tailwind.config.ts   # (Tidak terlalu dipakai karena Tailwind v4 menggunakan globals.css)
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## ✏️ Cara Mengedit Data Siswa & Kelas
 
-## Deploy on Vercel
+Semua data (teks, nama, quote, foto) sifatnya *hardcoded* (tidak pakai database). Kalian hanya perlu mengedit file **`src/data/mockData.ts`**.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Edit Daftar Warga Kelas**: Cari array `generateMembers()` atau `classMembers`. Ubah string nama, quote, dan link foto.
+- **Edit Struktur Kelas (Wali Kelas, Ketua, dll)**: Cari array `structureData`.
+- **Edit Galeri**: Ubah URL gambar pada array `galleryImages`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 🎨 Aturan Desain: Panduan Neobrutalism
+
+Jika kalian ingin membuat komponen baru, pastikan kalian **wajib mematuhi** aturan desain ini agar tema website tidak hancur:
+
+1. **Warna Wajib**: Hanya gunakan dominan warna kuning neo (`bg-neo-yellow` atau `#e5de00`), putih (`bg-neo-white` atau `#FFFFFF`), dan hitam (`bg-black`).
+2. **Border Super Tebal**: Setiap elemen (kartu, tombol, gambar) harus punya border hitam. Gunakan class `border-4 border-black`.
+3. **Hard Shadows (Bukan Blur)**: Jangan pakai bayangan soft bawaan tailwind (seperti `shadow-lg`). Selalu gunakan custom shadow solid:
+   - Standar: `shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]`
+   - Hover (Tombol ditekan): `shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] translate-x-1 translate-y-1`
+4. **Animasi (Framer Motion)**: Gunakan animasi pegas (spring) yang responsif dan kasar. **Dilarang keras** menggunakan transisi *fade-in* yang lambat dan elegan.
+   - Contoh transisi wajib: `transition={{ type: "spring", stiffness: 400, damping: 15 }}`
+5. **Tipografi Berani**: Gunakan kapital penuh (`uppercase`) dan font tebal (`font-black` atau `font-bold`) untuk teks judul.
+
+---
+
+> "Logic, Code, and Creativity." - **XII PPLG 1**
