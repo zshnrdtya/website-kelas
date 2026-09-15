@@ -10,6 +10,11 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: "XII PPLG 1 - Website Kelas",
   description: "Website resmi kelas XII PPLG 1 SMKN 1 Depok. Logic, Code, and Creativity.",
+  icons: {
+    icon: "/logo-pplg.jpeg",
+    shortcut: "/logo-pplg.jpeg",
+    apple: "/logo-pplg.jpeg",
+  },
 };
 
 export default function RootLayout({

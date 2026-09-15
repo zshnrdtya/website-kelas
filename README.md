@@ -53,27 +53,42 @@ website-kelas/
 │   ├── globals.css      # Konfigurasi Tailwind v4 (@theme) & Custom Keyframes Marquee
 │   ├── layout.tsx       # Root layout, konfigurasi Font Space Grotesk, dan Metadata
 │   └── page.tsx         # Halaman Utama (Merakit semua komponen jadi satu)
+├── public/              # Direktori folder foto kelas (/kelas10, /kelas11, /kegiatan)
 ├── src/
 │   ├── components/      # Semua komponen UI terpisah (Modular)
-│   │   ├── Gallery.tsx
+│   │   ├── Gallery.tsx  # Galeri Memori (CSS Masonry, filter kategori, lightbox uncropped)
 │   │   ├── Hero.tsx
 │   │   ├── Navbar.tsx
-│   │   ├── Profiles.tsx # Termasuk fitur Search Filter
 │   │   └── StructureTimeline.tsx
 │   └── data/
-│       └── mockData.ts  # ⚠️ PUSAT DATA: Edit nama siswa, struktur, & foto di sini!
-└── tailwind.config.ts   # (Tidak terlalu dipakai karena Tailwind v4 menggunakan globals.css)
+│       └── mockData.ts  # ⚠️ PUSAT DATA: Edit memori galeri, kategori, & struktur di sini!
+└── tailwind.config.ts   # (Tailwind v4 menggunakan globals.css)
 ```
 
 ---
 
-## ✏️ Cara Mengedit Data Siswa & Kelas
+## ✏️ Cara Mengedit Galeri & Menambahkan Foto Baru
 
-Semua data (teks, nama, quote, foto) sifatnya *hardcoded* (tidak pakai database). Kalian hanya perlu mengedit file **`src/data/mockData.ts`**.
+Semua data tersimpan secara lokal dan terstruktur di **`src/data/mockData.ts`** dan folder **`public/`**:
 
-- **Edit Daftar Warga Kelas**: Cari array `generateMembers()` atau `classMembers`. Ubah string nama, quote, dan link foto.
-- **Edit Struktur Kelas (Wali Kelas, Ketua, dll)**: Cari array `structureData`.
-- **Edit Galeri**: Ubah URL gambar pada array `galleryImages`.
+1. **Simpan File Foto ke `public/`**:
+   - Taruh file foto kalian ke dalam folder yang sesuai, misalnya `public/kelas10/foto-baru.jpg` atau buat folder baru seperti `public/kelas12/`.
+2. **Daftarkan Foto di `src/data/mockData.ts`**:
+   - Tambahkan item baru ke dalam array `memoriesData`:
+     ```typescript
+     {
+       id: "k10-7",
+       title: "Judul Momen Kenangan",
+       src: "/kelas10/foto-baru.jpg",
+       category: "Kelas 10",
+       folder: "kelas10",
+       date: "September 2023",
+       description: "Deskripsi singkat tentang momen ini.",
+     }
+     ```
+   - Semua foto akan otomatis muncul di galeri dengan mempertahankan rasio aslinya (tanpa terpotong/crop)!
+3. **Edit Struktur Kelas**:
+   - Cari array `structureData` di `src/data/mockData.ts`.
 
 ---
 
