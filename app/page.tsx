@@ -1,25 +1,49 @@
 import Navbar from "../src/components/Navbar";
 import Hero from "../src/components/Hero";
+import TechStackMarquee from "../src/components/TechStackMarquee";
 import StructureTimeline from "../src/components/StructureTimeline";
 import Gallery from "../src/components/Gallery";
+import BackToTop from "../src/components/BackToTop";
 import InstagramIcon from "../src/components/InstagramIcon";
+import { classStudentNames } from "../src/data/mockData";
 
 export default function Home() {
   return (
     <main className="w-full">
       <Navbar />
       <Hero />
+      <TechStackMarquee />
       <StructureTimeline />
       <Gallery />
       
-      {/* Neobrutalist Marquee */}
-      <div className="w-full bg-neo-yellow border-b-4 border-black py-4 overflow-hidden relative">
-        <div className="flex w-max animate-marquee">
-          {[...Array(8)].map((_, i) => (
-            <span key={i} className="text-4xl md:text-5xl font-black uppercase px-8 border-r-4 border-black inline-block min-w-max text-black">
-              XII PPLG 1 - WE ARE THE BEST CLASS
-            </span>
-          ))}
+      {/* Dual Neobrutalist Marquee */}
+      <div className="w-full overflow-hidden relative">
+        {/* Top Marquee: Student Names (Moving Left to Right: Kiri ke Kanan) */}
+        <div className="w-full bg-black text-neo-white border-b-4 border-black py-3.5 overflow-hidden relative select-none">
+          <div className="flex w-max animate-marquee-reverse">
+            {[...classStudentNames, ...classStudentNames].map((name, i) => (
+              <span
+                key={i}
+                className="text-2xl sm:text-3xl md:text-4xl font-black uppercase px-6 sm:px-8 border-r-4 border-neutral-700 inline-block min-w-max text-neo-white tracking-wide"
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom Marquee: Class Slogan (Moving Right to Left: Kanan ke Kiri) */}
+        <div className="w-full bg-neo-yellow border-b-4 border-black py-4 overflow-hidden relative select-none">
+          <div className="flex w-max animate-marquee">
+            {[...Array(8)].map((_, i) => (
+              <span
+                key={i}
+                className="text-3xl sm:text-4xl md:text-5xl font-black uppercase px-8 border-r-4 border-black inline-block min-w-max text-black tracking-tight"
+              >
+                XII PPLG 1 - WE ARE THE BEST CLASS
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -48,6 +72,9 @@ export default function Home() {
 
         <div className="w-24 h-3 bg-neo-yellow mx-auto"></div>
       </footer>
+
+      {/* Floating Back to Top Button */}
+      <BackToTop />
     </main>
   );
 }

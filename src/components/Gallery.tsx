@@ -7,6 +7,7 @@ import { memoriesData } from "../data/mockData";
 export default function Gallery() {
   const ITEMS_PER_LOAD = 5;
   const [activeCategory, setActiveCategory] = useState<string>("All");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState<number>(ITEMS_PER_LOAD);
 
@@ -16,11 +17,18 @@ export default function Gallery() {
     ...Array.from(new Set(memoriesData.map((item) => item.category))),
   ];
 
-  // Filter memories according to selected category
-  const filteredMemories =
-    activeCategory === "All"
-      ? memoriesData
-      : memoriesData.filter((item) => item.category === activeCategory);
+  // Filter memories according to selected category and search query
+  const filteredMemories = memoriesData.filter((item) => {
+    const matchesCategory = activeCategory === "All" || item.category === activeCategory;
+    const query = searchQuery.toLowerCase().trim();
+    const matchesSearch =
+      query === "" ||
+      item.title.toLowerCase().includes(query) ||
+      (item.description && item.description.toLowerCase().includes(query)) ||
+      (item.date && item.date.toLowerCase().includes(query)) ||
+      (item.folder && item.folder.toLowerCase().includes(query));
+    return matchesCategory && matchesSearch;
+  });
 
   // Currently selected memory for the lightbox
   const selectedMemory =
@@ -117,17 +125,62 @@ export default function Gallery() {
           })}
         </div>
 
+        {/* Search Input Bar */}
+        <div className="max-w-md mx-auto mb-8 px-2">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setVisibleCount(ITEMS_PER_LOAD);
+              }}
+              placeholder="Cari momen foto (judul, tanggal, dll)..."
+              className="w-full bg-neo-white text-black font-bold text-sm sm:text-base px-4 py-3 pl-11 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:translate-x-0.5 focus:translate-y-0.5 outline-none transition-all placeholder:text-neutral-500"
+            />
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-600 font-bold text-lg select-none">
+              🔍
+            </span>
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 bg-black text-neo-white text-xs font-black px-2 py-1 border border-black hover:bg-red-500 transition-colors cursor-pointer"
+                title="Hapus pencarian"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Counter Info Banner */}
         <div className="text-center mb-10">
           <span className="inline-block bg-black text-neo-white font-bold text-xs sm:text-sm uppercase tracking-wider px-4 py-1.5 border-2 border-black">
             Menampilkan {displayedMemories.length} dari {filteredMemories.length} foto ({activeCategory})
+            {searchQuery && ` • Pencarian: "${searchQuery}"`}
           </span>
         </div>
 
         {/* Empty State */}
         {filteredMemories.length === 0 ? (
           <div className="w-full max-w-xl mx-auto bg-neo-white border-4 border-black p-8 text-center shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-            <h3 className="text-2xl font-black uppercase">Belum ada foto di folder/kategori ini!</h3>
+            <h3 className="text-2xl font-black uppercase mb-2">Tidak ada foto yang cocok!</h3>
+            {searchQuery && (
+              <p className="text-sm font-semibold text-neutral-700 mb-4">
+                Pencarian &quot;{searchQuery}&quot; tidak ditemukan pada kategori {activeCategory}.
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("");
+                setActiveCategory("All");
+              }}
+              className="bg-neo-yellow text-black font-black uppercase text-sm px-6 py-2.5 border-3 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-black hover:text-neo-yellow transition-all cursor-pointer"
+            >
+              Reset Filter &amp; Pencarian
+            </button>
           </div>
         ) : (
           /* CSS Multi-Column Masonry Layout: Zero Cropping, Natural Aspect Ratios */
