@@ -1,110 +1,148 @@
-# ⚡ XII PPLG 1 - Website Kelas (Neobrutalism Edition)
+# ⚡ XII PPLG 1 - Official Class Website (Neobrutalism Edition)
 
-Selamat datang di repository website kelas **XII PPLG 1 (SMKN 1 Depok)**! Website ini dibangun murni menggunakan pendekatan **Frontend-Only** dengan bahasa desain **Neobrutalism** — desain yang berani, kasar, bayangan tebal (hard shadows), warna mencolok, dan tipografi raksasa.
+> **Website Resmi & Galeri Kenangan Kelas XII Pengembangan Perangkat Lunak dan Gim (PPLG) 1 — SMK Negeri 1 Depok**  
+> Didesain dengan estetika **Neobrutalism murni**: tipografi tegas raksasa, kontras warna kuning-hitam-putih tinggi, *hard shadows* solid tanpa blur, dan border tebal khas dunia rekayasa perangkat lunak.
+
+[![Next.js](https://img.shields.io/badge/Next.js-16.3.0_(Turbopack)-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.2.8-blue?style=for-the-badge&logo=react)](https://react.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-38bdf8?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178c6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![Instagram](https://img.shields.io/badge/Instagram-@12pplg1__-E4405F?style=for-the-badge&logo=instagram)](https://www.instagram.com/12pplg1_/)
 
 ---
 
-## 🛠️ Tech Stack
+## 🔒 HAK CIPTA & KEPEMILIKAN EKSKLUSIF (PROPRIETARY NOTICE)
 
-Website ini dibangun menggunakan teknologi modern terbaru:
-- **Framework:** [Next.js 14+ (App Router)](https://nextjs.org/)
-- **Bahasa:** [TypeScript](https://www.typescriptlang.org/)
+> [!CAUTION]
+> ### DILARANG MENYALIN, MENGAMBIL, ATAU MENGKLAIM TANPA IZIN!
+> **SELURUH KONTEN, KODE SUMBER, DESAIN, ASET FOTO, DAN MEDIA DALAM WEBSITE INI ADALAH MILIK RESMI DAN EKSKLUSIF DARI ANGKATAN XII PPLG 1 SMK NEGERI 1 DEPOK.**
+> 
+> **Copyright &copy; 2024-2027 XII PPLG 1 SMK Negeri 1 Depok. All Rights Reserved.**
+
+### Ketentuan Hukum & Larangan Keras:
+1. **Dilarang Keras Mengkloning / Mengambil Proyek**: Anda **TIDAK DIIZINKAN** menyalin (*copy-paste*), mengkloning (*clone/fork* tanpa izin), memodifikasi untuk keperluan kelas lain/sekolah lain/pihak ketiga, atau mengklaim karya desain dan kode ini sebagai buatan Anda sendiri.
+2. **Perlindungan Privasi & Foto Siswa**: Seluruh foto dokumentasi kegiatan siswa-siswi yang ada di dalam folder `public/Kelas 10` dan `public/Kelas 11` adalah privasi serta dokumentasi autentik angkatan XII PPLG 1. **Dilarang keras mengunduh, memanfaatkan, menyalahgunakan, atau menyebarluaskan foto-foto murid untuk tujuan apa pun.**
+3. **Non-Komersial & Portofolio**: Dilarang menjual, mengomersialisasikan, atau memakai proyek ini dalam kompetisi/portofolio pribadi tanpa adanya izin tertulis resmi dari angkatan XII PPLG 1 SMKN 1 Depok.
+4. **Sanksi Pelanggaran**: Segala bentuk pelanggaran hak kekayaan intelektual, pencurian identitas, atau penyalahgunaan aset media akan ditindaklanjuti sesuai dengan hukum yang berlaku di Indonesia (**UU No. 28 Tahun 2014 tentang Hak Cipta** dan **UU ITE**).
+
+Untuk izin penggunaan atau klarifikasi, silakan hubungi kami via Instagram resmi: [**@12pplg1_**](https://www.instagram.com/12pplg1_/).
+
+---
+
+## ✨ Fitur-Fitur Utama Website
+
+1. **First Fold 100dvh (Fit Satu Layar Penuh)**:
+   - Header Hero berpadu dengan logo resmi OneDek & PPLG serta running logo Tech Stack pas dalam 1 layar tinggi perangkat (`100dvh`) tanpa harus scroll saat pertama kali dibuka.
+2. **Running Logo Tech Stack Interaktif**:
+   - Menampilkan 15 teknologi dan tools yang dikuasai siswa PPLG (HTML5, CSS3, JavaScript, PHP, Laravel, MySQL, Java, Android, Unity, Blender, VS Code, Figma, GitHub, Laragon, phpMyAdmin) yang bergerak mulus.
+3. **Galeri Kenangan Multi-Aspect Ratio (57 Foto Autentik)**:
+   - Menampilkan koleksi 57 foto asli Kelas 10 (42 foto) & Kelas 11 (15 foto) tanpa cropping otomatis (*true aspect ratio*).
+   - Fitur pencarian instan (*real-time live search*).
+   - Filter kategori (*Semua*, *Kelas 10*, *Kelas 11*).
+   - Pagination bertahap (+5 foto per klik) atau tombol *Tampilkan Semua Foto*.
+   - Lightbox modal resolusi penuh lengkap dengan navigasi panah keyboard (`←` / `→`).
+4. **Dual-Directional Running Marquee**:
+   - **Jalur Atas**: Menampilkan 34 nama siswa/i XII PPLG 1 bergerak dari kiri ke kanan.
+   - **Jalur Bawah**: Menampilkan slogan kebanggaan kelas bergerak dari kanan ke kiri.
+5. **Struktur Organisasi Kelas**:
+   - Menampilkan 8 peran kepengurusan inti (Kepala Program Keahlian, Wali Kelas, Ketua Kelas, Wakil, Sekretaris 1-2, Bendahara 1-2).
+6. **Smart Background Music Player ("God Bless - Rumah Kita")**:
+   - Dilengkapi efek *smooth volume fade-in* (0.0 ke 0.45) saat mulai memutar.
+   - **Smart Lifecycle Auto-Pause**: Otomatis berhenti seketika saat pengguna berpindah tab, membuka aplikasi lain, atau kembali ke home HP/laptop, dan memutar kembali saat tab dibuka.
+   - Widget neobrutalist interaktif di pojok kiri bawah untuk mematikan/menyalakan musik kapan saja.
+7. **Navigasi Lengkap & Floating Back To Top**:
+   - Header navigasi responsif dengan link Instagram resmi dan tombol melayang kembali ke atas (*Back to Top*).
+
+---
+
+## 🛠️ Tech Stack & Dependencies
+
+- **Framework:** [Next.js 16 (App Router & Turbopack)](https://nextjs.org/)
+- **Core Library:** [React 19](https://react.dev/)
 - **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
-- **Animasi:** [Framer Motion](https://www.framer.com/motion/)
-- **Font:** Space Grotesk (via `next/font/google`)
+- **Animasi:** [Framer Motion v13](https://www.framer.com/motion/)
+- **Bahasa:** [TypeScript 5](https://www.typescriptlang.org/)
+- **Tipografi:** Space Grotesk (`next/font/google`)
 
 ---
 
-## 🚀 Getting Started (Cara Menjalankan Project)
-
-Untuk teman-teman yang mau ikut berkontribusi atau melanjutkan project ini, ikuti langkah berikut:
-
-### 1. Prerequisites
-Pastikan kamu sudah menginstall **Node.js** (rekomendasi versi 18 atau 20+) dan `npm`.
-
-### 2. Clone & Install Dependencies
-Buka terminal dan jalankan:
-```bash
-# Clone repository ini (sesuaikan link jika sudah di-upload ke GitHub)
-# git clone <url-repo-kalian>
-
-# Masuk ke direktori project
-cd website-kelas
-
-# Install semua module dan dependency
-npm install
-```
-
-### 3. Jalankan Local Development Server
-```bash
-npm run dev
-```
-Buka [http://localhost:3000](http://localhost:3000) di browsermu. Setiap perubahan kode akan langsung terlihat secara *real-time* (Hot Reload).
-
----
-
-## 📁 Struktur Folder Utama
-
-Penting untuk mengetahui di mana letak file jika kalian ingin mengedit konten:
+## 📁 Struktur Direktori Proyek
 
 ```text
 website-kelas/
 ├── app/
-│   ├── globals.css      # Konfigurasi Tailwind v4 (@theme) & Custom Keyframes Marquee
-│   ├── layout.tsx       # Root layout, konfigurasi Font Space Grotesk, dan Metadata
-│   └── page.tsx         # Halaman Utama (Merakit semua komponen jadi satu)
-├── public/              # Direktori folder foto kelas (/kelas10, /kelas11, /kegiatan)
+│   ├── globals.css              # Konfigurasi Tailwind v4 (@theme), utility classes, animasi marquee
+│   ├── layout.tsx               # Root Layout, Space Grotesk font, metadata SEO & Favicon
+│   └── page.tsx                 # Halaman Utama (Merakit Hero, TechStack, Struktur, Galeri, Footer)
+├── public/
+│   ├── asset-song/              # Audio musik latar (rumah-kita.mp3)
+│   ├── asset-techstack/         # 15 file logo teknologi & tools PPLG
+│   ├── Kelas 10/                # 42 foto autentik dokumentasi kelas 10
+│   ├── Kelas 11/                # 15 foto autentik dokumentasi kelas 11
+│   ├── logo-onedek.jpeg         # Logo SMKN 1 Depok
+│   └── logo pplg.jpeg           # Logo Jurusan PPLG
 ├── src/
-│   ├── components/      # Semua komponen UI terpisah (Modular)
-│   │   ├── Gallery.tsx  # Galeri Memori (CSS Masonry, filter kategori, lightbox uncropped)
-│   │   ├── Hero.tsx
-│   │   ├── Navbar.tsx
-│   │   └── StructureTimeline.tsx
+│   ├── components/
+│   │   ├── BackToTop.tsx        # Floating button kembali ke atas
+│   │   ├── Gallery.tsx          # Galeri masonry, filter, search, lightbox, dan dual marquee
+│   │   ├── Hero.tsx             # Hero section neobrutalism dengan responsive decorator boxes
+│   │   ├── MusicPlayer.tsx      # Smart audio player dengan auto-pause tab lifecycle
+│   │   ├── Navbar.tsx           # Bar navigasi atas dengan link Instagram
+│   │   ├── StructureTimeline.tsx# Bagan struktur organisasi kelas
+│   │   └── TechStackMarquee.tsx # Running marquee 15 logo tech stack
 │   └── data/
-│       └── mockData.ts  # ⚠️ PUSAT DATA: Edit memori galeri, kategori, & struktur di sini!
-└── tailwind.config.ts   # (Tailwind v4 menggunakan globals.css)
+│       └── mockData.ts          # Pusat data: 57 foto galeri, 8 pengurus kelas, 34 nama murid
+├── LICENSE                      # Lisensi resmi kepemilikan XII PPLG 1
+├── package.json                 # Next.js 16, React 19, Tailwind v4
+└── README.md                    # Dokumentasi lengkap proyek
 ```
 
 ---
 
-## ✏️ Cara Mengedit Galeri & Menambahkan Foto Baru
+## 🚀 Panduan Menjalankan Project (Local Development)
 
-Semua data tersimpan secara lokal dan terstruktur di **`src/data/mockData.ts`** dan folder **`public/`**:
+### 1. Prasyarat
+Pastikan komputer sudah terpasang:
+- **Node.js** versi 18.18+ atau 20+
+- **npm** atau package manager sejenis
 
-1. **Simpan File Foto ke `public/`**:
-   - Taruh file foto kalian ke dalam folder yang sesuai, misalnya `public/kelas10/foto-baru.jpg` atau buat folder baru seperti `public/kelas12/`.
-2. **Daftarkan Foto di `src/data/mockData.ts`**:
-   - Tambahkan item baru ke dalam array `memoriesData`:
-     ```typescript
-     {
-       id: "k10-7",
-       title: "Judul Momen Kenangan",
-       src: "/kelas10/foto-baru.jpg",
-       category: "Kelas 10",
-       folder: "kelas10",
-       date: "September 2023",
-       description: "Deskripsi singkat tentang momen ini.",
-     }
-     ```
-   - Semua foto akan otomatis muncul di galeri dengan mempertahankan rasio aslinya (tanpa terpotong/crop)!
-3. **Edit Struktur Kelas**:
-   - Cari array `structureData` di `src/data/mockData.ts`.
+### 2. Instalasi Dependensi
+```bash
+# Masuk ke direktori project
+cd website-kelas
 
----
+# Install semua dependencies
+npm install
+```
 
-## 🎨 Aturan Desain: Panduan Neobrutalism
+### 3. Menjalankan Server Development
+```bash
+npm run dev
+```
+Buka browser di [http://localhost:3000](http://localhost:3000). Proyek menggunakan Next.js 16 Turbopack dengan Hot Module Replacement (HMR) super cepat.
 
-Jika kalian ingin membuat komponen baru, pastikan kalian **wajib mematuhi** aturan desain ini agar tema website tidak hancur:
-
-1. **Warna Wajib**: Hanya gunakan dominan warna kuning neo (`bg-neo-yellow` atau `#e5de00`), putih (`bg-neo-white` atau `#FFFFFF`), dan hitam (`bg-black`).
-2. **Border Super Tebal**: Setiap elemen (kartu, tombol, gambar) harus punya border hitam. Gunakan class `border-4 border-black`.
-3. **Hard Shadows (Bukan Blur)**: Jangan pakai bayangan soft bawaan tailwind (seperti `shadow-lg`). Selalu gunakan custom shadow solid:
-   - Standar: `shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]`
-   - Hover (Tombol ditekan): `shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] translate-x-1 translate-y-1`
-4. **Animasi (Framer Motion)**: Gunakan animasi pegas (spring) yang responsif dan kasar. **Dilarang keras** menggunakan transisi *fade-in* yang lambat dan elegan.
-   - Contoh transisi wajib: `transition={{ type: "spring", stiffness: 400, damping: 15 }}`
-5. **Tipografi Berani**: Gunakan kapital penuh (`uppercase`) dan font tebal (`font-black` atau `font-bold`) untuk teks judul.
+### 4. Build untuk Produksi
+```bash
+npm run build
+```
 
 ---
 
-> "Logic, Code, and Creativity." - **XII PPLG 1**
+## 🎨 Pedoman Desain Neobrutalism
+
+Jika ingin melakukan pengembangan komponen baru, wajib mematuhi panduan desain Neobrutalism berikut:
+1. **Palet Warna**: Dominan kuning neobrutal (`bg-neo-yellow` / `#e5de00`), putih bersih (`bg-neo-white` / `#ffffff`), dan hitam pekat (`bg-black`).
+2. **Border Kontras Tebal**: Setiap komponen, tombol, dan gambar menggunakan border hitam minimal 4px (`border-4 border-black`).
+3. **Hard Solid Shadows**: Tidak menggunakan bayangan blur lembut (`shadow-lg`). Wajib menggunakan solid offset shadow:
+   - Normal: `shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]` atau `shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]`
+   - Active/Hover: `hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5`
+4. **Tipografi Berani & Tegas**: Menggunakan font sans berkarakter kuat (`Space Grotesk`), teks kapital penuh (`uppercase`), serta ketebalan maksimal (`font-black` / `font-extrabold`).
+
+---
+
+<div align="center">
+  <br />
+  <strong>XII PPLG 1 — SMKN 1 DEPOK</strong><br />
+  <i>"Code, Create, and Inspire."</i><br />
+  <a href="https://www.instagram.com/12pplg1_/">@12pplg1_</a>
+</div>
