@@ -4,6 +4,7 @@ import TechStackMarquee from "../src/components/TechStackMarquee";
 import StructureTimeline from "../src/components/StructureTimeline";
 import Gallery from "../src/components/Gallery";
 import BackToTop from "../src/components/BackToTop";
+import MusicPlayer from "../src/components/MusicPlayer";
 import InstagramIcon from "../src/components/InstagramIcon";
 import { classStudentNames } from "../src/data/mockData";
 
@@ -78,6 +79,9 @@ export default function Home() {
 
       {/* Floating Back to Top Button */}
       <BackToTop />
+
+      {/* Floating Music Player (God Bless - Rumah Kita) */}
+      <MusicPlayer />
     </main>
   );
 }
