@@ -15,7 +15,7 @@ export default function Hero() {
         animate={{ scale: 1, rotate: -6, opacity: 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.15 }}
         whileHover={{ scale: 1.08, rotate: 0 }}
-        className="absolute top-6 left-6 sm:top-10 sm:left-10 md:top-12 md:left-12 lg:top-14 lg:left-16 w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36 lg:w-40 lg:h-40 border-4 border-black bg-neo-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] items-center justify-center p-2.5 sm:p-3.5 z-20 hidden sm:flex cursor-pointer transition-shadow hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+        className="absolute top-4 left-4 sm:top-10 sm:left-10 md:top-12 md:left-12 lg:top-14 lg:left-16 w-16 h-16 sm:w-28 sm:h-28 md:w-36 md:h-36 lg:w-40 lg:h-40 border-3 sm:border-4 border-black bg-neo-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] items-center justify-center p-1.5 sm:p-3.5 z-20 flex cursor-pointer transition-all hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
         title="Logo SMK Negeri 1 Depok"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -32,7 +32,7 @@ export default function Hero() {
         animate={{ scale: 1, rotate: 6, opacity: 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.25 }}
         whileHover={{ scale: 1.08, rotate: 0 }}
-        className="absolute bottom-6 right-6 sm:bottom-10 sm:right-10 md:bottom-12 md:right-12 lg:bottom-14 lg:right-16 w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 border-4 border-black bg-neo-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] items-center justify-center p-2.5 sm:p-3.5 z-20 hidden sm:flex cursor-pointer transition-shadow hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+        className="absolute bottom-4 right-4 sm:bottom-10 sm:right-10 md:bottom-12 md:right-12 lg:bottom-14 lg:right-16 w-16 h-16 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 border-3 sm:border-4 border-black bg-neo-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] items-center justify-center p-1.5 sm:p-3.5 z-20 flex cursor-pointer transition-all hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
         title="Logo PPLG"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -47,7 +47,7 @@ export default function Hero() {
       <div className="absolute top-1/4 right-1/4 w-10 h-10 bg-black rotate-45 hidden lg:block pointer-events-none" />
       
       {/* Main Hero Content */}
-      <div className="max-w-6xl mx-auto text-center z-10">
+      <div className="max-w-6xl mx-auto text-center z-10 my-auto py-8 sm:py-0">
         <motion.h2 
           initial={{ y: 50, opacity: 0 }}
           whileInView={{ y: 0, opacity: 1 }}
@@ -63,7 +63,7 @@ export default function Hero() {
           whileInView={{ y: 0, opacity: 1 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ ...springConfig, delay: 0.1 }}
-          className="text-5xl md:text-7xl lg:text-9xl font-black uppercase leading-[0.9] tracking-tighter mb-8 text-black drop-shadow-[4px_4px_0_#fff]"
+          className="text-4xl sm:text-7xl lg:text-9xl font-black uppercase leading-[0.95] sm:leading-[0.9] tracking-tighter mb-6 sm:mb-8 text-black drop-shadow-[3px_3px_0_#fff] sm:drop-shadow-[4px_4px_0_#fff]"
         >
           PENGEMBANGAN PERANGKAT LUNAK DAN GIM
         </motion.h1>
