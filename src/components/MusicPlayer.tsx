@@ -8,20 +8,34 @@ export default function MusicPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [userInteracted, setUserInteracted] = useState(false);
 
+  const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const wasPlayingBeforeHideRef = useRef(false);
+
   // Fade in audio helper
   const fadeInAudio = (audio: HTMLAudioElement, targetVolume = 0.45, durationMs = 2500) => {
+    if (fadeIntervalRef.current) {
+      clearInterval(fadeIntervalRef.current);
+      fadeIntervalRef.current = null;
+    }
+
     audio.volume = 0;
     const stepTime = 50;
     const stepVolume = targetVolume / (durationMs / stepTime);
 
-    const interval = setInterval(() => {
+    fadeIntervalRef.current = setInterval(() => {
       if (audio.paused) {
-        clearInterval(interval);
+        if (fadeIntervalRef.current) {
+          clearInterval(fadeIntervalRef.current);
+          fadeIntervalRef.current = null;
+        }
         return;
       }
       if (audio.volume + stepVolume >= targetVolume) {
         audio.volume = targetVolume;
-        clearInterval(interval);
+        if (fadeIntervalRef.current) {
+          clearInterval(fadeIntervalRef.current);
+          fadeIntervalRef.current = null;
+        }
       } else {
         audio.volume = Math.min(targetVolume, audio.volume + stepVolume);
       }
@@ -33,6 +47,7 @@ export default function MusicPlayer() {
     if (!audio) return;
 
     const tryAutoPlay = () => {
+      if (document.hidden) return;
       audio
         .play()
         .then(() => {
@@ -50,6 +65,7 @@ export default function MusicPlayer() {
 
     // 2. If blocked by browser, trigger on first user interaction anywhere
     const handleFirstGesture = () => {
+      if (document.hidden) return;
       if (audio.paused && !userInteracted) {
         audio
           .play()
@@ -65,10 +81,73 @@ export default function MusicPlayer() {
     window.addEventListener("touchstart", handleFirstGesture, { once: true });
     window.addEventListener("keydown", handleFirstGesture, { once: true });
 
+    // 3. Pause when switching tab, minimizing, or returning to phone/laptop home
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Tab or window is hidden / minimized / switched away
+        if (!audio.paused) {
+          wasPlayingBeforeHideRef.current = true;
+          if (fadeIntervalRef.current) {
+            clearInterval(fadeIntervalRef.current);
+            fadeIntervalRef.current = null;
+          }
+          audio.pause();
+          setIsPlaying(false);
+        }
+      } else {
+        // Tab is visible again
+        if (wasPlayingBeforeHideRef.current) {
+          wasPlayingBeforeHideRef.current = false;
+          audio
+            .play()
+            .then(() => {
+              setIsPlaying(true);
+              fadeInAudio(audio, 0.45, 1500);
+            })
+            .catch(() => {});
+        }
+      }
+    };
+
+    const handlePageHide = () => {
+      if (!audio.paused) {
+        wasPlayingBeforeHideRef.current = true;
+        if (fadeIntervalRef.current) {
+          clearInterval(fadeIntervalRef.current);
+          fadeIntervalRef.current = null;
+        }
+        audio.pause();
+        setIsPlaying(false);
+      }
+    };
+
+    const handlePageShow = () => {
+      if (wasPlayingBeforeHideRef.current && !document.hidden) {
+        wasPlayingBeforeHideRef.current = false;
+        audio
+          .play()
+          .then(() => {
+            setIsPlaying(true);
+            fadeInAudio(audio, 0.45, 1500);
+          })
+          .catch(() => {});
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("pageshow", handlePageShow);
+
     return () => {
       window.removeEventListener("click", handleFirstGesture);
       window.removeEventListener("touchstart", handleFirstGesture);
       window.removeEventListener("keydown", handleFirstGesture);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("pageshow", handlePageShow);
+      if (fadeIntervalRef.current) {
+        clearInterval(fadeIntervalRef.current);
+      }
     };
   }, [userInteracted]);
 
@@ -79,9 +158,15 @@ export default function MusicPlayer() {
     setUserInteracted(true);
 
     if (isPlaying) {
+      wasPlayingBeforeHideRef.current = false;
+      if (fadeIntervalRef.current) {
+        clearInterval(fadeIntervalRef.current);
+        fadeIntervalRef.current = null;
+      }
       audio.pause();
       setIsPlaying(false);
     } else {
+      wasPlayingBeforeHideRef.current = false;
       audio
         .play()
         .then(() => {
