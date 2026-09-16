@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import { VolumeX } from "lucide-react";
 
 export default function MusicPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -210,7 +211,7 @@ export default function MusicPlayer() {
               <span className="w-1 bg-black animate-[bounce_0.9s_infinite] h-1/2" />
             </>
           ) : (
-            <span className="text-base sm:text-lg leading-none">🔇</span>
+            <VolumeX className="w-4 h-4 stroke-[2.5]" />
           )}
         </div>
 

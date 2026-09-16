@@ -1,6 +1,7 @@
 import Navbar from "../src/components/Navbar";
 import Hero from "../src/components/Hero";
 import TechStackMarquee from "../src/components/TechStackMarquee";
+import Classroom3D from "../src/components/Classroom3D";
 import StructureTimeline from "../src/components/StructureTimeline";
 import Gallery from "../src/components/Gallery";
 import BackToTop from "../src/components/BackToTop";
@@ -17,6 +18,7 @@ export default function Home() {
         <Hero />
         <TechStackMarquee />
       </div>
+      <Classroom3D />
       <StructureTimeline />
       <Gallery />
       

@@ -19,7 +19,8 @@ export default function Navbar() {
 
           {/* Navigation Links & Social Media */}
           <div className="flex items-center gap-3 sm:gap-6">
-            <nav className="flex gap-2 sm:gap-6">
+            <nav className="flex gap-1.5 sm:gap-4">
+              <NavLink href="#denah" text="Ruang Kelas 3D" />
               <NavLink href="#struktur" text="Struktur" />
               <NavLink href="#galeri" text="Galeri" />
             </nav>

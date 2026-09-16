@@ -94,12 +94,73 @@ export const classStudentNames: string[] = [
   "Bima",
   "Rangga",
   "Fariz",
+  "Nafisah",
   "Nakita",
   "Raditya",
   "Rahma",
   "Rifqi",
   "Salma",
   "Zilfa",
+];
+
+export interface ClassroomStudent {
+  absen: number;
+  name: string;
+  gender: "cowo" | "cewe";
+  row: number; // 1 to 6
+  col: number; // 1 to 6
+  wing: "Kiri" | "Kanan";
+  role: string;
+  quote: string;
+}
+
+export const classroomSeatingData: ClassroomStudent[] = [
+  // Baris 1 (Depan)
+  { absen: 1, name: "Agnia", gender: "cewe", row: 1, col: 1, wing: "Kiri", role: "Fullstack Developer", quote: "Semua masalah pasti ada solusinya, termasuk error semicolon." },
+  { absen: 2, name: "Ahmad", gender: "cowo", row: 1, col: 2, wing: "Kiri", role: "Fullstack Developer", quote: "Frontend estetik, backend tangguh dan solid." },
+  { absen: 3, name: "Akmal", gender: "cowo", row: 1, col: 3, wing: "Kiri", role: "Fullstack Developer", quote: "Struktur data rapi, masa depan pasti cerah." },
+  { absen: 4, name: "Alif", gender: "cowo", row: 1, col: 4, wing: "Kanan", role: "Fullstack Developer", quote: "Deploy tanpa panik adalah kunci ketenangan jiwa." },
+  { absen: 5, name: "Alissa", gender: "cewe", row: 1, col: 5, wing: "Kanan", role: "Fullstack Developer", quote: "Desain yang hebat adalah desain yang memudahkan manusia." },
+  { absen: 6, name: "Ayya", gender: "cewe", row: 1, col: 6, wing: "Kanan", role: "Fullstack Developer", quote: "Belajar coding itu proses, jangan lupa istirahat sejenak." },
+
+  // Baris 2
+  { absen: 7, name: "Bayu", gender: "cowo", row: 2, col: 1, wing: "Kiri", role: "Fullstack Developer", quote: "Game bukan cuma hiburan, tapi seni interaktif tanpa batas." },
+  { absen: 8, name: "Danish", gender: "cowo", row: 2, col: 2, wing: "Kiri", role: "Fullstack Developer", quote: "Clean code, clean architecture, clear future." },
+  { absen: 9, name: "Dewi", gender: "cewe", row: 2, col: 3, wing: "Kiri", role: "Fullstack Developer", quote: "Kreativitas tanpa batas di setiap baris kode yang ditulis." },
+  { absen: 10, name: "Dhimas", gender: "cowo", row: 2, col: 4, wing: "Kanan", role: "Fullstack Developer", quote: "Menciptakan aplikasi yang bermanfaat untuk jutaan orang." },
+  { absen: 11, name: "Dzakwan", gender: "cowo", row: 2, col: 5, wing: "Kanan", role: "Fullstack Developer", quote: "API kencang, server hemat, sistem handal." },
+  { absen: 12, name: "Fadliansyah", gender: "cowo", row: 2, col: 6, wing: "Kanan", role: "Fullstack Developer", quote: "Analisa logika mendalam sebelum eksekusi program." },
+
+  // Baris 3
+  { absen: 13, name: "Fakih", gender: "cowo", row: 3, col: 1, wing: "Kiri", role: "Fullstack Developer", quote: "Dari kubus sederhana berkembang jadi dunia 3D yang megah." },
+  { absen: 14, name: "Ibrahim", gender: "cowo", row: 3, col: 2, wing: "Kiri", role: "Fullstack Developer", quote: "Keamanan sistem dan integritas data adalah prioritas utama." },
+  { absen: 15, name: "Jasmine", gender: "cewe", row: 3, col: 3, wing: "Kiri", role: "Fullstack Developer", quote: "Kas kelas aman dan tercatat, project kelas berjalan lancar!" },
+  { absen: 16, name: "Jheryco", gender: "cowo", row: 3, col: 4, wing: "Kanan", role: "Fullstack Developer", quote: "Optimasi logika adalah seni pemrograman yang sesungguhnya." },
+  { absen: 17, name: "Jian", gender: "cowo", row: 3, col: 5, wing: "Kanan", role: "Fullstack Developer", quote: "Kekuatan tim PPLG 1 adalah saling melengkapi kekurangan." },
+  { absen: 18, name: "Jonathan", gender: "cowo", row: 3, col: 6, wing: "Kanan", role: "Fullstack Developer", quote: "Level up tiap hari, jangan pernah takut pada error dan bug." },
+
+  // Baris 4
+  { absen: 19, name: "Jonni", gender: "cowo", row: 4, col: 1, wing: "Kiri", role: "Fullstack Developer", quote: "Memimpin dengan aksi, menyatukan kelas dengan hati dan dedikasi." },
+  { absen: 20, name: "Keysha", gender: "cewe", row: 4, col: 2, wing: "Kiri", role: "Fullstack Developer", quote: "Temukan bug sebelum bug itu sendiri yang menemukan kita." },
+  { absen: 21, name: "Marfa", gender: "cewe", row: 4, col: 3, wing: "Kiri", role: "Fullstack Developer", quote: "Catatan rapi, dokumentasi lengkap, kelas selalu siap siaga." },
+  { absen: 22, name: "May", gender: "cewe", row: 4, col: 4, wing: "Kanan", role: "Fullstack Developer", quote: "Terus mengeksplorasi teknologi baru tanpa ragu-ragu." },
+  { absen: 23, name: "Daffa", gender: "cowo", row: 4, col: 5, wing: "Kanan", role: "Fullstack Developer", quote: "Fisika game yang seru bikin gameplay makin hidup." },
+  { absen: 24, name: "Akbar", gender: "cowo", row: 4, col: 6, wing: "Kanan", role: "Fullstack Developer", quote: "Jaringan stabil, server siap tempur, coding jalan terus." },
+
+  // Baris 5
+  { absen: 25, name: "Afdal", gender: "cowo", row: 5, col: 1, wing: "Kiri", role: "Fullstack Developer", quote: "Data adalah fondasi paling berharga di era informasi digital." },
+  { absen: 26, name: "Bima", gender: "cowo", row: 5, col: 2, wing: "Kiri", role: "Fullstack Developer", quote: "Wujudkan setiap imajinasi game menjadi realitas interaktif." },
+  { absen: 27, name: "Rangga", gender: "cowo", row: 5, col: 3, wing: "Kiri", role: "Fullstack Developer", quote: "Desain responsif, mulus di semua perangkat genggam." },
+  { absen: 28, name: "Fariz", gender: "cowo", row: 5, col: 4, wing: "Kanan", role: "Fullstack Developer", quote: "Biar automation script yang bekerja keras menggantikan rutinitas." },
+  { absen: 29, name: "Nafisah", gender: "cewe", row: 5, col: 5, wing: "Kanan", role: "Fullstack Developer", quote: "Kreativitas dan logika berpadu untuk menciptakan karya terbaik." },
+  { absen: 30, name: "Nakita", gender: "cewe", row: 5, col: 6, wing: "Kanan", role: "Fullstack Developer", quote: "Setiap rupiah kas kelas dihitung dengan ketelitian tinggi!" },
+
+  // Baris 6 (Belakang)
+  { absen: 31, name: "Raditya", gender: "cowo", row: 6, col: 1, wing: "Kiri", role: "Fullstack Developer", quote: "Neobrutalism bukan cuma gaya desain, tapi sebuah pernyataan sikap berani." },
+  { absen: 32, name: "Rahma", gender: "cewe", row: 6, col: 2, wing: "Kiri", role: "Fullstack Developer", quote: "Paduan estetika visual dan baris kode untuk masa depan cerah." },
+  { absen: 33, name: "Rifqi", gender: "cowo", row: 6, col: 3, wing: "Kiri", role: "Fullstack Developer", quote: "Menjaga integrasi dan aliran data tanpa hambatan sama sekali." },
+  { absen: 34, name: "Salma", gender: "cewe", row: 6, col: 4, wing: "Kanan", role: "Fullstack Developer", quote: "Menciptakan antarmuka yang memikat mata dan mudah dinavigasi." },
+  { absen: 35, name: "Zilfa", gender: "cewe", row: 6, col: 5, wing: "Kanan", role: "Fullstack Developer", quote: "Kenangan, arsip, dan ikatan kekeluargaan XII PPLG 1 abadi di sini." },
 ];
 
 export const memoryCategories = [
