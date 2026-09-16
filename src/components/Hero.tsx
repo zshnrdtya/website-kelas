@@ -7,7 +7,7 @@ export default function Hero() {
   const springConfig = { type: "spring" as const, stiffness: 400, damping: 15 };
 
   return (
-    <section className="relative w-full min-h-[90vh] bg-neo-yellow border-b-4 border-black flex flex-col justify-center items-center overflow-hidden px-4 py-20">
+    <section className="relative w-full flex-1 bg-neo-yellow border-b-4 border-black flex flex-col justify-center items-center overflow-hidden px-4 py-4 sm:py-6">
       
       {/* Kotak Logo Atas Kiri: Logo SMK Negeri 1 Depok */}
       <motion.div
@@ -15,7 +15,7 @@ export default function Hero() {
         animate={{ scale: 1, rotate: -6, opacity: 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.15 }}
         whileHover={{ scale: 1.08, rotate: 0 }}
-        className="absolute top-4 left-4 sm:top-10 sm:left-10 md:top-12 md:left-12 lg:top-14 lg:left-16 w-16 h-16 sm:w-28 sm:h-28 md:w-36 md:h-36 lg:w-40 lg:h-40 border-3 sm:border-4 border-black bg-neo-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] items-center justify-center p-1.5 sm:p-3.5 z-20 flex cursor-pointer transition-all hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+        className="absolute top-2.5 left-2.5 sm:top-6 sm:left-6 md:top-8 md:left-8 w-14 h-14 sm:w-20 sm:h-20 md:w-28 md:h-28 lg:w-32 lg:h-32 border-3 sm:border-4 border-black bg-neo-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] items-center justify-center p-1.5 sm:p-2.5 z-20 flex cursor-pointer transition-all hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
         title="Logo SMK Negeri 1 Depok"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -32,7 +32,7 @@ export default function Hero() {
         animate={{ scale: 1, rotate: 6, opacity: 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.25 }}
         whileHover={{ scale: 1.08, rotate: 0 }}
-        className="absolute bottom-4 right-4 sm:bottom-10 sm:right-10 md:bottom-12 md:right-12 lg:bottom-14 lg:right-16 w-16 h-16 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 border-3 sm:border-4 border-black bg-neo-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] items-center justify-center p-1.5 sm:p-3.5 z-20 flex cursor-pointer transition-all hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+        className="absolute bottom-2.5 right-2.5 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 w-14 h-14 sm:w-22 sm:h-22 md:w-28 md:h-28 lg:w-36 lg:h-36 border-3 sm:border-4 border-black bg-neo-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] items-center justify-center p-1.5 sm:p-2.5 z-20 flex cursor-pointer transition-all hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
         title="Logo PPLG"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -44,50 +44,50 @@ export default function Hero() {
       </motion.div>
 
       {/* Background Accent Decorator */}
-      <div className="absolute top-1/4 right-1/4 w-10 h-10 bg-black rotate-45 hidden lg:block pointer-events-none" />
+      <div className="absolute top-1/4 right-1/4 w-8 h-8 bg-black rotate-45 hidden lg:block pointer-events-none" />
       
       {/* Main Hero Content */}
-      <div className="max-w-6xl mx-auto text-center z-10 my-auto py-8 sm:py-0">
+      <div className="max-w-6xl mx-auto text-center z-10 my-auto py-2 sm:py-4 px-2 flex flex-col items-center justify-center">
         <motion.h2 
-          initial={{ y: 50, opacity: 0 }}
+          initial={{ y: 30, opacity: 0 }}
           whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ once: true, margin: "-50px" }}
           transition={springConfig}
-          className="text-2xl md:text-4xl font-black uppercase mb-4 tracking-widest bg-neo-white inline-block px-4 py-2 border-4 border-black -rotate-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+          className="text-xs sm:text-lg md:text-xl font-black uppercase mb-2 sm:mb-3 tracking-widest bg-neo-white inline-block px-3 py-1 sm:px-4 sm:py-1.5 border-3 sm:border-4 border-black -rotate-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
         >
           {classInfo.name}
         </motion.h2>
         
         <motion.h1 
-          initial={{ y: 50, opacity: 0 }}
+          initial={{ y: 30, opacity: 0 }}
           whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ once: true, margin: "-50px" }}
           transition={{ ...springConfig, delay: 0.1 }}
-          className="text-4xl sm:text-7xl lg:text-9xl font-black uppercase leading-[0.95] sm:leading-[0.9] tracking-tighter mb-6 sm:mb-8 text-black drop-shadow-[3px_3px_0_#fff] sm:drop-shadow-[4px_4px_0_#fff]"
+          className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black uppercase leading-[0.92] tracking-tighter mb-3 sm:mb-5 text-black drop-shadow-[2px_2px_0_#fff] sm:drop-shadow-[4px_4px_0_#fff]"
         >
           PENGEMBANGAN PERANGKAT LUNAK DAN GIM
         </motion.h1>
         
         <motion.p 
-          initial={{ y: 50, opacity: 0 }}
+          initial={{ y: 30, opacity: 0 }}
           whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ once: true, margin: "-50px" }}
           transition={{ ...springConfig, delay: 0.2 }}
-          className="text-xl md:text-3xl font-bold mb-12 max-w-2xl mx-auto bg-black text-neo-white px-6 py-4 border-4 border-black rotate-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+          className="text-xs sm:text-base md:text-xl font-bold mb-4 sm:mb-6 max-w-xl md:max-w-2xl mx-auto bg-black text-neo-white px-4 py-1.5 sm:px-6 sm:py-2 border-3 sm:border-4 border-black rotate-1 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
         >
           {classInfo.tagline}
         </motion.p>
         
         <motion.div 
-          initial={{ y: 50, opacity: 0 }}
+          initial={{ y: 30, opacity: 0 }}
           whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ once: true, margin: "-50px" }}
           transition={{ ...springConfig, delay: 0.3 }}
           className="flex justify-center"
         >
           <Link
             href="#galeri"
-            className="inline-block bg-neo-white text-black font-black uppercase text-xl md:text-3xl px-12 py-6 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-2 hover:translate-y-2 transition-all active:shadow-none active:translate-x-3 active:translate-y-3"
+            className="inline-block bg-neo-white text-black font-black uppercase text-sm sm:text-lg md:text-xl px-7 py-2.5 sm:px-9 sm:py-3.5 border-3 sm:border-4 border-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 transition-all active:shadow-none active:translate-x-1 active:translate-y-1"
           >
             Jelajahi Galeri
           </Link>

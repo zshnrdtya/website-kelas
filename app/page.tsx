@@ -11,8 +11,11 @@ export default function Home() {
   return (
     <main className="w-full">
       <Navbar />
-      <Hero />
-      <TechStackMarquee />
+      {/* First Fold Screen: Hero + TechStackMarquee fits exactly in 1 full screen */}
+      <div className="w-full min-h-[calc(100dvh-4rem)] sm:min-h-[calc(100dvh-5rem)] flex flex-col justify-between">
+        <Hero />
+        <TechStackMarquee />
+      </div>
       <StructureTimeline />
       <Gallery />
       

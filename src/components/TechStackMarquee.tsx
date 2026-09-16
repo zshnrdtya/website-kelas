@@ -25,8 +25,8 @@ const techList: TechItem[] = [
 
 export default function TechStackMarquee() {
   return (
-    <section className="w-full bg-black text-neo-white border-b-4 border-black py-4 overflow-hidden relative select-none">
-      <div className="flex w-max animate-marquee gap-6 sm:gap-8 items-center">
+    <section className="w-full bg-black text-neo-white border-b-4 border-black py-2.5 sm:py-3.5 overflow-hidden relative select-none shrink-0">
+      <div className="flex w-max animate-marquee gap-4 sm:gap-6 items-center">
         {/* Render twice for seamless loop */}
         {[...techList, ...techList].map((tech, i) => (
           <div
