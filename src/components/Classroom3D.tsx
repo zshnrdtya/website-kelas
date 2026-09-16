@@ -1454,7 +1454,7 @@ export default function Classroom3D() {
             RUANG KELAS XII PPLG 1
           </h2>
           <p className="mt-3 text-sm sm:text-base md:text-lg font-bold text-neutral-700">
-            Jelajahi ruang kelas 3D virtual 35 siswa XII PPLG 1. Drag untuk putar 360°, scroll untuk zoom, dan klik meja temanmu!
+            Jelajahi ruang kelas 3D virtual 35 murid XII PPLG 1. Drag untuk putar 360°, scroll untuk zoom, dan klik meja temanmu!
           </p>
         </div>
 
@@ -1610,7 +1610,7 @@ export default function Classroom3D() {
                 <span>Wali Kelas: Bu Hilda</span>
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="w-3 h-3 bg-white border border-black inline-block" /> 35 Meja Siswa
+                <span className="w-3 h-3 bg-white border border-black inline-block" /> 35 Meja Murid
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <span className="w-3 h-3 bg-neo-yellow border border-black inline-block" /> Meja Guru & Whiteboard
