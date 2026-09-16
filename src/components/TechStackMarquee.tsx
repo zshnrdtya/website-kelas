@@ -14,6 +14,8 @@ const techList: TechItem[] = [
   { name: "MySQL", logo: "/asset-techstack/mysql.jpeg" },
   { name: "Java", logo: "/asset-techstack/java.jpeg" },
   { name: "Android", logo: "/asset-techstack/android.jpeg" },
+  { name: "Unity", logo: "/asset-techstack/unity.png" },
+  { name: "Blender", logo: "/asset-techstack/blender.jpg" },
   { name: "VS Code", logo: "/asset-techstack/vscode.jpeg" },
   { name: "Figma", logo: "/asset-techstack/figma.jpeg" },
   { name: "GitHub", logo: "/asset-techstack/github.jpeg" },
