@@ -1,6 +1,6 @@
 # ⚡ XII PPLG 1 - Official Class Website (Neobrutalism Edition)
 
-> **Website Resmi & Galeri Kenangan Kelas XII Pengembangan Perangkat Lunak dan Gim (PPLG) 1 — SMK Negeri 1 Depok**  
+> **Website Resmi & Galeri Kenangan Kelas XII Pengembangan Perangkat Lunak dan Gim (PPLG) 1 - SMK Negeri 1 Depok**  
 > Didesain dengan estetika **Neobrutalism murni**: tipografi tegas raksasa, kontras warna kuning-hitam-putih tinggi, *hard shadows* solid tanpa blur, dan border tebal khas dunia rekayasa perangkat lunak.
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.3.0_(Turbopack)-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
