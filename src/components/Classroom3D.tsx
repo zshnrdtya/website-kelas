@@ -27,9 +27,11 @@ export default function Classroom3D() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Selected student state
+  // Selected student & teacher states
   const [selectedStudent, setSelectedStudent] = useState<ClassroomStudent | null>(null);
   const [hoveredStudent, setHoveredStudent] = useState<ClassroomStudent | null>(null);
+  const [isTeacherSelected, setIsTeacherSelected] = useState(false);
+  const [isTeacherHovered, setIsTeacherHovered] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"orbit" | "top" | "teacher" | "back">("orbit");
   const [isAutoRotating, setIsAutoRotating] = useState(false);
@@ -38,6 +40,7 @@ export default function Classroom3D() {
   // References for animation and control handling
   const controlsRef = useRef<OrbitControls | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const teacherFigureRef = useRef<THREE.Group | null>(null);
   const deskMeshesRef = useRef<Map<number, { topMesh: THREE.Mesh; defaultColor: number }>>(new Map());
   const animationTargetRef = useRef<{
     camPos: THREE.Vector3;
@@ -76,6 +79,7 @@ export default function Classroom3D() {
   // Helper to trigger focus on a student desk
   const focusOnStudent = (student: ClassroomStudent) => {
     setSelectedStudent(student);
+    setIsTeacherSelected(false);
     const entry = deskMeshesRef.current.get(student.absen);
     if (entry && cameraRef.current) {
       const worldPos = new THREE.Vector3();
@@ -397,6 +401,9 @@ export default function Classroom3D() {
     scene.add(createACUnit(-15.1, 6.5, 4.5, Math.PI / 2));
     scene.add(createACUnit(15.1, 6.5, 4.5, -Math.PI / 2));
 
+    // Interactive Raycaster Mesh Collection
+    const interactiveMeshes: THREE.Mesh[] = [];
+
     // 7. TEACHER DESK & CHAIR (Front Center)
     const teacherDeskGroup = new THREE.Group();
     // Teacher Desk Top
@@ -409,7 +416,9 @@ export default function Classroom3D() {
     tDeskTop.position.set(0, 1.2, -8.0);
     tDeskTop.castShadow = true;
     tDeskTop.receiveShadow = true;
+    tDeskTop.userData = { isTeacher: true };
     teacherDeskGroup.add(tDeskTop);
+    interactiveMeshes.push(tDeskTop);
 
     // Teacher Desk Body / Legs
     const tDeskBaseGeo = new THREE.BoxGeometry(4.0, 1.15, 1.8);
@@ -420,16 +429,45 @@ export default function Classroom3D() {
     const tDeskBase = new THREE.Mesh(tDeskBaseGeo, tDeskBaseMat);
     tDeskBase.position.set(0, 0.575, -8.0);
     tDeskBase.castShadow = true;
+    tDeskBase.userData = { isTeacher: true };
     teacherDeskGroup.add(tDeskBase);
 
-    // Teacher Laptop
-    const laptopBaseGeo = new THREE.BoxGeometry(0.8, 0.04, 0.6);
-    const laptopMat = new THREE.MeshStandardMaterial({ color: 0x334155 });
-    const laptopBase = new THREE.Mesh(laptopBaseGeo, laptopMat);
-    laptopBase.position.set(0, 1.3, -8.0);
-    teacherDeskGroup.add(laptopBase);
+    // 7A. TEACHER LAPTOP (Facing Bu Hilda, Back Lid Facing Students)
+    const laptopGroup = new THREE.Group();
+    laptopGroup.position.set(0, 1.285, -8.12);
 
-    // Teacher Laptop Screen (Admin / Teacher Coding Dashboard)
+    // 1. Laptop Base / Chassis
+    const laptopBaseMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      roughness: 0.35,
+      metalness: 0.8,
+    });
+    const laptopBase = new THREE.Mesh(
+      new THREE.BoxGeometry(0.85, 0.024, 0.58),
+      laptopBaseMat
+    );
+    laptopBase.position.set(0, 0.012, 0);
+    laptopBase.castShadow = true;
+    laptopBase.receiveShadow = true;
+    laptopGroup.add(laptopBase);
+
+    // 2. Keyboard & Trackpad on Base (Facing Bu Hilda)
+    const teacherKbMat = new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.8 });
+    const kbMesh = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.006, 0.26), teacherKbMat);
+    kbMesh.position.set(0, 0.025, -0.02);
+    laptopGroup.add(kbMesh);
+
+    const trackpadMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.4 });
+    const trackpadMesh = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.004, 0.15), trackpadMat);
+    trackpadMesh.position.set(0, 0.025, -0.20);
+    laptopGroup.add(trackpadMesh);
+
+    // 3. Laptop Screen Lid & Display (Hinged at the far edge, open toward Bu Hilda)
+    const screenHinge = new THREE.Group();
+    screenHinge.position.set(0, 0.024, 0.28);
+    screenHinge.rotation.x = 0.22; // Tilts top toward students, opening display towards Bu Hilda
+
+    // Teacher Laptop Screen Texture (VS Code Teacher Dashboard)
     const tScreenCanvas = document.createElement("canvas");
     tScreenCanvas.width = 512;
     tScreenCanvas.height = 320;
@@ -472,24 +510,268 @@ export default function Classroom3D() {
     const tScreenTex = new THREE.CanvasTexture(tScreenCanvas);
     tScreenTex.colorSpace = THREE.SRGBColorSpace;
 
-    const laptopScreenGeo = new THREE.BoxGeometry(0.8, 0.55, 0.03);
-    const laptopScreenMat = new THREE.MeshBasicMaterial({ map: tScreenTex });
-    const laptopScreen = new THREE.Mesh(laptopScreenGeo, laptopScreenMat);
-    laptopScreen.position.set(0, 1.6, -8.28);
-    laptopScreen.rotation.x = -0.2;
-    teacherDeskGroup.add(laptopScreen);
+    // Screen Box:
+    // [0: +X, 1: -X, 2: +Y, 3: -Y, 4: +Z (Front/Facing Students), 5: -Z (Back/Facing Bu Hilda)]
+    const teacherScreenGeo = new THREE.BoxGeometry(0.85, 0.56, 0.022);
+    const screenDisplayMat = new THREE.MeshBasicMaterial({ map: tScreenTex });
+    const screenMaterials = [
+      laptopBaseMat, // +X
+      laptopBaseMat, // -X
+      laptopBaseMat, // +Y
+      laptopBaseMat, // -Y
+      laptopBaseMat, // +Z facing students (Back lid)
+      screenDisplayMat, // -Z facing Bu Hilda (Active VS Code display!)
+    ];
+    const laptopScreenMesh = new THREE.Mesh(teacherScreenGeo, screenMaterials);
+    laptopScreenMesh.position.set(0, 0.28, 0);
+    laptopScreenMesh.castShadow = true;
+    laptopScreenMesh.userData = { isTeacher: true };
+    screenHinge.add(laptopScreenMesh);
+    interactiveMeshes.push(laptopScreenMesh);
 
-    // Teacher Chair
-    const tChairGeo = new THREE.BoxGeometry(1.0, 1.2, 0.9);
-    const tChairMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
-    const tChair = new THREE.Mesh(tChairGeo, tChairMat);
-    tChair.position.set(0, 0.9, -9.5);
-    teacherDeskGroup.add(tChair);
+    // Glowing School Logo Badge on the Back Lid (+Z face, facing students)
+    const logoCanvas = document.createElement("canvas");
+    logoCanvas.width = 128;
+    logoCanvas.height = 128;
+    const lctx = logoCanvas.getContext("2d");
+    if (lctx) {
+      lctx.fillStyle = "#1e293b";
+      lctx.fillRect(0, 0, 128, 128);
+      lctx.fillStyle = "#38bdf8";
+      lctx.font = "bold 26px sans-serif";
+      lctx.textAlign = "center";
+      lctx.textBaseline = "middle";
+      lctx.fillText("PPLG 1", 64, 50);
+      lctx.font = "bold 15px sans-serif";
+      lctx.fillStyle = "#cbd5e1";
+      lctx.fillText("TEACHER", 64, 82);
+    }
+    const logoTex = new THREE.CanvasTexture(logoCanvas);
+    const logoMat = new THREE.MeshBasicMaterial({ map: logoTex });
+    const logoMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.24), logoMat);
+    logoMesh.position.set(0, 0.28, 0.012);
+    screenHinge.add(logoMesh);
+
+    laptopGroup.add(screenHinge);
+    teacherDeskGroup.add(laptopGroup);
+
+    // Teacher Ergonomic Office Chair
+    const tChairGroup = new THREE.Group();
+    tChairGroup.position.set(0, 0, -9.4);
+
+    const chairCushionMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
+    const chairBaseMat = new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.4 });
+
+    // Chair Seat Cushion
+    const seatMesh = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.12, 0.9), chairCushionMat);
+    seatMesh.position.y = 0.72;
+    seatMesh.castShadow = true;
+    tChairGroup.add(seatMesh);
+
+    // Chair High Backrest
+    const backMesh = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.95, 0.1), chairCushionMat);
+    backMesh.position.set(0, 1.25, -0.42);
+    backMesh.castShadow = true;
+    tChairGroup.add(backMesh);
+
+    // Chair Post & Star Base
+    const postMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.65, 8), chairBaseMat);
+    postMesh.position.y = 0.35;
+    tChairGroup.add(postMesh);
+
+    const baseMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.06, 8), chairBaseMat);
+    baseMesh.position.y = 0.05;
+    tChairGroup.add(baseMesh);
+
+    teacherDeskGroup.add(tChairGroup);
+
+    // --- 7B. 3D FEMALE TEACHER ASSET: BU HILDA RAHMAWATI, S.KOM (WALI KELAS) ---
+    const teacherFigure = new THREE.Group();
+    teacherFigure.position.set(0, 0, -9.2);
+    teacherFigure.userData = { isTeacher: true };
+
+    const tSkinMat = new THREE.MeshStandardMaterial({
+      color: 0xf6c8a4, // Healthy Indonesian skin tone
+      roughness: 0.6,
+    });
+    const tBlazerMat = new THREE.MeshStandardMaterial({
+      color: 0x047857, // Dignified Emerald Green formal teacher blazer
+      roughness: 0.5,
+    });
+    const tSkirtMat = new THREE.MeshStandardMaterial({
+      color: 0x064e3b, // Matching deep formal skirt
+      roughness: 0.6,
+    });
+    const tHijabMat = new THREE.MeshStandardMaterial({
+      color: 0xfef3c7, // Elegant soft cream/ivory hijab
+      roughness: 0.35,
+    });
+    const tGoldMat = new THREE.MeshStandardMaterial({
+      color: 0xfacc15,
+      metalness: 0.8,
+      roughness: 0.2,
+    });
+
+    // 1. Torso & Teacher Blazer
+    const tTorsoGeo = new THREE.BoxGeometry(0.56, 0.62, 0.30);
+    const tTorso = new THREE.Mesh(tTorsoGeo, tBlazerMat);
+    tTorso.position.set(0, 1.08, 0);
+    tTorso.castShadow = true;
+    tTorso.userData = { isTeacher: true };
+    teacherFigure.add(tTorso);
+    interactiveMeshes.push(tTorso);
+
+    // Inner White Shirt Collar
+    const tShirtGeo = new THREE.BoxGeometry(0.18, 0.20, 0.02);
+    const tShirtMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    const tShirt = new THREE.Mesh(tShirtGeo, tShirtMat);
+    tShirt.position.set(0, 1.26, 0.155);
+    teacherFigure.add(tShirt);
+
+    // Gold Teacher Name Badge on Chest
+    const tBadgeGeo = new THREE.BoxGeometry(0.14, 0.05, 0.02);
+    const tBadge = new THREE.Mesh(tBadgeGeo, tGoldMat);
+    tBadge.position.set(0.16, 1.22, 0.16);
+    teacherFigure.add(tBadge);
+
+    // 2. Head, Hijab & Glasses
+    const tNeckGeo = new THREE.CylinderGeometry(0.07, 0.08, 0.12, 8);
+    const tNeck = new THREE.Mesh(tNeckGeo, tSkinMat);
+    tNeck.position.set(0, 1.42, 0);
+    teacherFigure.add(tNeck);
+
+    const tHeadGeo = new THREE.BoxGeometry(0.30, 0.30, 0.28);
+    const tHead = new THREE.Mesh(tHeadGeo, tSkinMat);
+    tHead.position.set(0, 1.60, 0.01);
+    tHead.castShadow = true;
+    tHead.userData = { isTeacher: true };
+    teacherFigure.add(tHead);
+    interactiveMeshes.push(tHead);
+
+    // Elegant Teacher Hijab Wrap (Crown / Head)
+    const tHijabWrapGeo = new THREE.BoxGeometry(0.38, 0.40, 0.36);
+    const tHijabWrap = new THREE.Mesh(tHijabWrapGeo, tHijabMat);
+    tHijabWrap.position.set(0, 1.62, 0.01);
+    tHijabWrap.castShadow = true;
+    tHijabWrap.userData = { isTeacher: true };
+    teacherFigure.add(tHijabWrap);
+    interactiveMeshes.push(tHijabWrap);
+
+    // Hijab Drape over Shoulders & Neck
+    const tHijabDrapeGeo = new THREE.BoxGeometry(0.54, 0.32, 0.34);
+    const tHijabDrape = new THREE.Mesh(tHijabDrapeGeo, tHijabMat);
+    tHijabDrape.position.set(0, 1.30, 0.02);
+    tHijabDrape.castShadow = true;
+    teacherFigure.add(tHijabDrape);
+
+    // Eyes (Friendly gaze looking forward towards class)
+    const tEyeMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
+    const tEyeGeo = new THREE.BoxGeometry(0.045, 0.045, 0.02);
+    const tLeftEye = new THREE.Mesh(tEyeGeo, tEyeMat);
+    tLeftEye.position.set(-0.08, 1.60, 0.175);
+    teacherFigure.add(tLeftEye);
+
+    const tRightEye = new THREE.Mesh(tEyeGeo, tEyeMat);
+    tRightEye.position.set(0.08, 1.60, 0.175);
+    teacherFigure.add(tRightEye);
+
+    // Smart Teacher Glasses Frame
+    const tGlassesMat = new THREE.MeshBasicMaterial({ color: 0x020617 });
+    const glassRimGeo = new THREE.BoxGeometry(0.09, 0.07, 0.015);
+    const glassRimLeft = new THREE.Mesh(glassRimGeo, tGlassesMat);
+    glassRimLeft.position.set(-0.08, 1.60, 0.185);
+    teacherFigure.add(glassRimLeft);
+
+    const glassRimRight = new THREE.Mesh(glassRimGeo, tGlassesMat);
+    glassRimRight.position.set(0.08, 1.60, 0.185);
+    teacherFigure.add(glassRimRight);
+
+    const glassBridgeGeo = new THREE.BoxGeometry(0.06, 0.015, 0.015);
+    const glassBridge = new THREE.Mesh(glassBridgeGeo, tGlassesMat);
+    glassBridge.position.set(0, 1.60, 0.185);
+    teacherFigure.add(glassBridge);
+
+    // 3. Arms & Hands (Active typing at Teacher Laptop)
+    const tArmGeo = new THREE.BoxGeometry(0.10, 0.35, 0.11);
+    const tLeftArm = new THREE.Mesh(tArmGeo, tBlazerMat);
+    tLeftArm.position.set(-0.30, 1.18, 0.16);
+    tLeftArm.rotation.x = -0.72;
+    tLeftArm.castShadow = true;
+    teacherFigure.add(tLeftArm);
+
+    const tLeftForearmGeo = new THREE.BoxGeometry(0.09, 0.09, 0.38);
+    const tLeftForearm = new THREE.Mesh(tLeftForearmGeo, tBlazerMat);
+    tLeftForearm.position.set(-0.24, 1.25, 0.50);
+    tLeftForearm.rotation.x = 0.10;
+    teacherFigure.add(tLeftForearm);
+
+    const tHandGeo = new THREE.BoxGeometry(0.08, 0.04, 0.08);
+    const tLeftHand = new THREE.Mesh(tHandGeo, tSkinMat);
+    tLeftHand.position.set(-0.18, 1.30, 0.72);
+    teacherFigure.add(tLeftHand);
+
+    const tRightArm = new THREE.Mesh(tArmGeo, tBlazerMat);
+    tRightArm.position.set(0.30, 1.18, 0.16);
+    tRightArm.rotation.x = -0.72;
+    tRightArm.castShadow = true;
+    teacherFigure.add(tRightArm);
+
+    const tRightForearmGeo = new THREE.BoxGeometry(0.09, 0.09, 0.38);
+    const tRightForearm = new THREE.Mesh(tRightForearmGeo, tBlazerMat);
+    tRightForearm.position.set(0.24, 1.25, 0.50);
+    tRightForearm.rotation.x = 0.10;
+    teacherFigure.add(tRightForearm);
+
+    const tRightHand = new THREE.Mesh(tHandGeo, tSkinMat);
+    tRightHand.position.set(0.18, 1.30, 0.72);
+    teacherFigure.add(tRightHand);
+
+    teacherFigure.userData = { leftHand: tLeftHand, rightHand: tRightHand, isTeacher: true };
+
+    // 4. Lower Body (Sitting Gracefully)
+    const tPelvisGeo = new THREE.BoxGeometry(0.50, 0.20, 0.32);
+    const tPelvis = new THREE.Mesh(tPelvisGeo, tSkirtMat);
+    tPelvis.position.set(0, 0.76, 0.02);
+    tPelvis.castShadow = true;
+    teacherFigure.add(tPelvis);
+
+    const tSkirtGeo = new THREE.BoxGeometry(0.54, 0.64, 0.54);
+    const tSkirt = new THREE.Mesh(tSkirtGeo, tSkirtMat);
+    tSkirt.position.set(0, 0.45, 0.18);
+    tSkirt.castShadow = true;
+    teacherFigure.add(tSkirt);
+
+    const tShoeGeo = new THREE.BoxGeometry(0.14, 0.08, 0.20);
+    const tLeftShoe = new THREE.Mesh(tShoeGeo, chairBaseMat);
+    tLeftShoe.position.set(-0.14, 0.05, 0.42);
+    teacherFigure.add(tLeftShoe);
+
+    const tRightShoe = new THREE.Mesh(tShoeGeo, chairBaseMat);
+    tRightShoe.position.set(0.14, 0.05, 0.42);
+    teacherFigure.add(tRightShoe);
+
+    // 5. Teacher Desk Accessories: Mug & Agenda
+    const mugGeo = new THREE.CylinderGeometry(0.14, 0.12, 0.28, 16);
+    const mugMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+    const mug = new THREE.Mesh(mugGeo, mugMat);
+    mug.position.set(1.4, 1.35, 1.05);
+    mug.castShadow = true;
+    teacherFigure.add(mug);
+
+    const bookGeo = new THREE.BoxGeometry(0.65, 0.06, 0.85);
+    const bookMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.5 });
+    const book = new THREE.Mesh(bookGeo, bookMat);
+    book.position.set(-1.4, 1.25, 1.05);
+    book.rotation.y = 0.15;
+    book.castShadow = true;
+    teacherFigure.add(book);
+
+    teacherDeskGroup.add(teacherFigure);
+    teacherFigureRef.current = teacherFigure;
 
     scene.add(teacherDeskGroup);
 
-    // 8. 34 STUDENT DESKS & PC SETUPS
-    const interactiveMeshes: THREE.Mesh[] = [];
+    // 8. 35 STUDENT DESKS & PC SETUPS
     const deskMap = new Map<number, { topMesh: THREE.Mesh; defaultColor: number }>();
     const studentFigures: THREE.Group[] = [];
 
@@ -979,23 +1261,41 @@ export default function Classroom3D() {
       const intersects = raycaster.intersectObjects(interactiveMeshes);
 
       if (intersects.length > 0) {
-        const target = intersects[0].object as THREE.Mesh;
-        const student = target.userData.student as ClassroomStudent;
+        const hit = intersects[0].object as THREE.Mesh;
         canvas.style.cursor = "pointer";
 
-        if (currentHoveredAbsen !== student.absen) {
+        if (hit.userData.isTeacher) {
+          setIsTeacherHovered(true);
+          setHoveredStudent(null);
           if (currentHoveredAbsen !== null) {
             const prev = deskMap.get(currentHoveredAbsen);
             if (prev) {
               (prev.topMesh.material as THREE.MeshStandardMaterial).color.setHex(prev.defaultColor);
             }
+            currentHoveredAbsen = null;
           }
-          currentHoveredAbsen = student.absen;
-          (target.material as THREE.MeshStandardMaterial).color.setHex(0xe5de00);
-          setHoveredStudent(student);
+          return;
+        }
+
+        setIsTeacherHovered(false);
+
+        if (hit.userData.student) {
+          const student = hit.userData.student as ClassroomStudent;
+          if (currentHoveredAbsen !== student.absen) {
+            if (currentHoveredAbsen !== null) {
+              const prev = deskMap.get(currentHoveredAbsen);
+              if (prev) {
+                (prev.topMesh.material as THREE.MeshStandardMaterial).color.setHex(prev.defaultColor);
+              }
+            }
+            currentHoveredAbsen = student.absen;
+            (hit.material as THREE.MeshStandardMaterial).color.setHex(0xe5de00);
+            setHoveredStudent(student);
+          }
         }
       } else {
         canvas.style.cursor = "grab";
+        setIsTeacherHovered(false);
         if (currentHoveredAbsen !== null) {
           const prev = deskMap.get(currentHoveredAbsen);
           if (prev) {
@@ -1016,8 +1316,14 @@ export default function Classroom3D() {
       const intersects = raycaster.intersectObjects(interactiveMeshes);
 
       if (intersects.length > 0) {
-        const student = intersects[0].object.userData.student as ClassroomStudent;
-        setSelectedStudent(student);
+        const hit = intersects[0].object as THREE.Mesh;
+        if (hit.userData.isTeacher) {
+          setIsTeacherSelected(true);
+          setSelectedStudent(null);
+        } else if (hit.userData.student) {
+          setSelectedStudent(hit.userData.student as ClassroomStudent);
+          setIsTeacherSelected(false);
+        }
       }
     };
 
@@ -1105,6 +1411,17 @@ export default function Classroom3D() {
           fig.userData.rightHand.position.y = 1.02 + Math.cos(timeSec * 5 + idx * 3) * 0.004;
         }
       });
+
+      // Subtle Bu Hilda breathing, monitoring & typing animation
+      if (teacherFigureRef.current) {
+        teacherFigureRef.current.position.y = Math.sin(timeSec * 1.5) * 0.006;
+        if (teacherFigureRef.current.userData.leftHand) {
+          teacherFigureRef.current.userData.leftHand.position.y = 1.30 + Math.sin(timeSec * 6) * 0.003;
+        }
+        if (teacherFigureRef.current.userData.rightHand) {
+          teacherFigureRef.current.userData.rightHand.position.y = 1.30 + Math.cos(timeSec * 5.5) * 0.003;
+        }
+      }
 
       controls.update();
       renderer.render(scene, camera);
@@ -1260,7 +1577,7 @@ export default function Classroom3D() {
             />
 
             {/* Hover Tooltip Overlay */}
-            {hoveredStudent && !selectedStudent && (
+            {hoveredStudent && !selectedStudent && !isTeacherSelected && (
               <div className="absolute top-4 left-4 z-20 pointer-events-none bg-white text-black px-3.5 py-2 border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-fade-in">
                 <p className="text-xs font-black uppercase text-neutral-500">
                   Meja #{hoveredStudent.absen < 10 ? `0${hoveredStudent.absen}` : hoveredStudent.absen} • Baris {hoveredStudent.row}
@@ -1271,11 +1588,27 @@ export default function Classroom3D() {
                 <p className="text-[11px] font-bold text-neutral-700">{hoveredStudent.role}</p>
               </div>
             )}
+
+            {isTeacherHovered && !selectedStudent && !isTeacherSelected && (
+              <div className="absolute top-4 left-4 z-20 pointer-events-none bg-neo-yellow text-black px-3.5 py-2 border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-fade-in">
+                <p className="text-xs font-black uppercase text-neutral-900 flex items-center gap-1 font-mono">
+                  WALI KELAS • XII PPLG 1
+                </p>
+                <p className="text-base font-black uppercase text-black leading-tight">
+                  Bu Hilda Rahmawati, S.Kom
+                </p>
+                <p className="text-[11px] font-bold text-neutral-800">Guru Produktif & Wali Kelas (Klik untuk info)</p>
+              </div>
+            )}
           </div>
 
           {/* Bottom Bar: Help Legend & Hint */}
           <div className="bg-black text-white px-3 sm:px-4 py-2 text-xs font-bold flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 text-neo-yellow">
+                <GraduationCap className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Wali Kelas: Bu Hilda</span>
+              </span>
               <span className="inline-flex items-center gap-1.5">
                 <span className="w-3 h-3 bg-white border border-black inline-block" /> 35 Meja Siswa
               </span>
@@ -1377,6 +1710,92 @@ export default function Classroom3D() {
                   <button
                     type="button"
                     onClick={() => setSelectedStudent(null)}
+                    className="px-4 py-2.5 bg-white text-black font-black uppercase text-xs sm:text-sm border-3 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-neutral-100 transition-all cursor-pointer"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {isTeacherSelected && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+              onClick={() => setIsTeacherSelected(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.85, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.85, y: 20 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                className="bg-neo-white text-black border-4 border-black p-5 sm:p-7 max-w-md w-full shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Close Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsTeacherSelected(false)}
+                  className="absolute top-3.5 right-3.5 w-8 h-8 sm:w-9 sm:h-9 bg-neo-yellow border-2 sm:border-3 border-black font-black flex items-center justify-center text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-black hover:text-white cursor-pointer transition-colors"
+                >
+                  <X className="w-4 h-4 stroke-[3]" />
+                </button>
+
+                {/* Teacher Badge */}
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                  <span className="px-3 py-1 bg-black text-neo-yellow text-xs sm:text-sm font-black uppercase tracking-wider border border-black inline-flex items-center gap-1.5">
+                    <GraduationCap className="w-3.5 h-3.5 stroke-[2.5]" />
+                    MEJA GURU
+                  </span>
+                  <span className="px-2.5 py-1 bg-neo-yellow text-black text-[11px] sm:text-xs font-black uppercase border border-black">
+                    WALI KELAS XII PPLG 1
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-neutral-200 text-black text-[11px] sm:text-xs font-black uppercase border border-black">
+                    <User className="w-3 h-3 stroke-[2.5]" />
+                    <span>Guru Produktif</span>
+                  </span>
+                </div>
+
+                {/* Teacher Name */}
+                <h3 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black mb-1">
+                  Hilda Rahmawati, S.Kom
+                </h3>
+
+                {/* Teacher Role */}
+                <p className="text-sm sm:text-base font-black text-neutral-800 uppercase mb-4 inline-block bg-neo-yellow px-2 py-0.5 border border-black">
+                  Guru Produktif & Wali Kelas XII PPLG 1
+                </p>
+
+                {/* Quote Box */}
+                <div className="bg-neutral-100 border-3 border-black p-3.5 mb-5 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-neutral-500 mb-1">
+                    <Quote className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <span>Pesan & Motivasi Wali Kelas:</span>
+                  </div>
+                  <p className="text-sm sm:text-base font-bold italic text-neutral-900">
+                    &ldquo;Kodingan yang rapi mencerminkan logika yang tertata. Tetap semangat mengasah skill, jaga kedisiplinan, dan saling dukung satu sama lain menuju gerbang kelulusan.&rdquo;
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      animateCameraTo(new THREE.Vector3(0, 3.2, -4.5), new THREE.Vector3(0, 2.0, -8.8));
+                      setIsTeacherSelected(false);
+                    }}
+                    className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 bg-black text-neo-yellow font-black uppercase text-xs sm:text-sm border-3 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer"
+                  >
+                    <Focus className="w-4 h-4 stroke-[2.5]" />
+                    <span>Zoom Meja Bu Hilda</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsTeacherSelected(false)}
                     className="px-4 py-2.5 bg-white text-black font-black uppercase text-xs sm:text-sm border-3 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-neutral-100 transition-all cursor-pointer"
                   >
                     Tutup
