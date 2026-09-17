@@ -22,6 +22,7 @@ import {
   Info,
   Laptop,
   BarChart3,
+  Footprints,
 } from "lucide-react";
 
 interface MemoryMuseum3DProps {
@@ -60,6 +61,11 @@ export default function MemoryMuseum3D({
   const [isAutoRotating, setIsAutoRotating] = useState(false);
   const [viewPreset, setViewPreset] = useState<"hall" | "k10" | "k11" | "center" | "dashboard">("hall");
   const [isMuseumReady, setIsMuseumReady] = useState(false);
+  const [isWalkMode, setIsWalkMode] = useState(false);
+  const isWalkModeRef = useRef(false);
+  const keysPressedRef = useRef<Record<string, boolean>>({});
+  const virtualMoveRef = useRef({ forward: false, backward: false, left: false, right: false });
+  const walkBobTimeRef = useRef(0);
 
   // Three.js References
   const controlsRef = useRef<OrbitControls | null>(null);
@@ -115,8 +121,52 @@ export default function MemoryMuseum3D({
     [artworks, animateCameraTo]
   );
 
+  // Toggle First-Person Walk Mode
+  const toggleWalkMode = useCallback(() => {
+    setIsWalkMode((prev) => {
+      const nextState = !prev;
+      isWalkModeRef.current = nextState;
+
+      if (nextState) {
+        setIsAutoRotating(false);
+        setIsTourActive(false);
+        if (controlsRef.current) {
+          controlsRef.current.autoRotate = false;
+          controlsRef.current.minPolarAngle = Math.PI / 4;
+          controlsRef.current.maxPolarAngle = Math.PI * 0.72;
+          controlsRef.current.minDistance = 0.5;
+          controlsRef.current.maxDistance = 2.5;
+        }
+        animateCameraTo(
+          new THREE.Vector3(0, 1.7, 10.5),
+          new THREE.Vector3(0, 1.7, 0)
+        );
+      } else {
+        if (controlsRef.current) {
+          controlsRef.current.minPolarAngle = 0.08;
+          controlsRef.current.maxPolarAngle = Math.PI / 2 + 0.02;
+          controlsRef.current.minDistance = 3;
+          controlsRef.current.maxDistance = 38;
+        }
+        animateCameraTo(new THREE.Vector3(0, 9, 20), new THREE.Vector3(0, 2.5, 0));
+        setViewPreset("hall");
+      }
+      return nextState;
+    });
+  }, [animateCameraTo]);
+
   // Preset view handlers
   const handlePresetView = (preset: "hall" | "k10" | "k11" | "center" | "dashboard") => {
+    if (isWalkModeRef.current) {
+      setIsWalkMode(false);
+      isWalkModeRef.current = false;
+      if (controlsRef.current) {
+        controlsRef.current.minPolarAngle = 0.08;
+        controlsRef.current.maxPolarAngle = Math.PI / 2 + 0.02;
+        controlsRef.current.minDistance = 3;
+        controlsRef.current.maxDistance = 38;
+      }
+    }
     setViewPreset(preset);
     setIsTourActive(false);
     if (isAutoRotating) {
@@ -174,6 +224,7 @@ export default function MemoryMuseum3D({
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0a0f1d);
     scene.fog = new THREE.FogExp2(0x0a0f1d, 0.018);
+    const texturesToDispose: THREE.Texture[] = [];
 
     const width = container.clientWidth;
     const height = container.clientHeight || 580;
@@ -344,6 +395,535 @@ export default function MemoryMuseum3D({
     hallGroup.add(createMuseumWall(28, 8, -14, 0, Math.PI / 2));
     // Right Wing Wall (x = 14)
     hallGroup.add(createMuseumWall(28, 8, 14, 0, -Math.PI / 2));
+
+    // 5A. FRONT ENTRANCE WALL WITH DOUBLE GLASS DOORS (SOUTH WALL AT Z = 14)
+    // Uses THREE.FrontSide with inward-pointing normal (rotation.y = Math.PI):
+    // - From outside (Z > 14, e.g. default hall view at Z=20 or Orbit): CULLED / 100% INVISIBLE!
+    // - From inside (Z < 14 looking back at entrance): VISIBLE with double glass doors & illuminated sign!
+    const frontEntranceGroup = new THREE.Group();
+    frontEntranceGroup.position.set(0, 0, 14);
+
+    const frontWallMat = new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,
+      roughness: 0.8,
+      side: THREE.FrontSide, // Invisible when viewed from outside front Z > 14
+    });
+
+    // Left Solid Wall Segment (x = -8.5, width 11.0, height 8.0)
+    const leftFrontWall = new THREE.Mesh(new THREE.PlaneGeometry(11.0, 8.0), frontWallMat);
+    leftFrontWall.position.set(-8.5, 4.0, 0);
+    leftFrontWall.rotation.y = Math.PI;
+    leftFrontWall.receiveShadow = true;
+    frontEntranceGroup.add(leftFrontWall);
+
+    // Right Solid Wall Segment (x = 8.5, width 11.0, height 8.0)
+    const rightFrontWall = new THREE.Mesh(new THREE.PlaneGeometry(11.0, 8.0), frontWallMat);
+    rightFrontWall.position.set(8.5, 4.0, 0);
+    rightFrontWall.rotation.y = Math.PI;
+    rightFrontWall.receiveShadow = true;
+    frontEntranceGroup.add(rightFrontWall);
+
+    // Lintel Wall above Entrance Portal (x = 0, width 6.0, height 3.2, y = 6.4)
+    const lintelWall = new THREE.Mesh(new THREE.PlaneGeometry(6.0, 3.2), frontWallMat);
+    lintelWall.position.set(0, 6.4, 0);
+    lintelWall.rotation.y = Math.PI;
+    frontEntranceGroup.add(lintelWall);
+
+    // Baseboards for Front Wall (Inward facing)
+    [-8.5, 8.5].forEach((bx) => {
+      const fb = new THREE.Mesh(new THREE.BoxGeometry(11.0, 0.4, 0.2), wallBaseboardMat);
+      fb.position.set(bx, 0.2, -0.1);
+      frontEntranceGroup.add(fb);
+
+      const fc = new THREE.Mesh(new THREE.BoxGeometry(11.0, 0.25, 0.2), borderMat);
+      fc.position.set(bx, 7.875, -0.1);
+      frontEntranceGroup.add(fc);
+    });
+
+    // Outer Entrance Portal Frame (Kusen Pintu Masuk Utama)
+    const portalFrameMat = new THREE.MeshStandardMaterial({
+      color: 0x090d16,
+      roughness: 0.4,
+      metalness: 0.5,
+    });
+    // Top portal lintel
+    const portalTop = new THREE.Mesh(new THREE.BoxGeometry(6.2, 0.22, 0.4), portalFrameMat);
+    portalTop.position.set(0, 4.9, 0);
+    frontEntranceGroup.add(portalTop);
+
+    // Left portal jamb
+    const portalLeft = new THREE.Mesh(new THREE.BoxGeometry(0.22, 4.9, 0.4), portalFrameMat);
+    portalLeft.position.set(-3.0, 2.45, 0);
+    frontEntranceGroup.add(portalLeft);
+
+    // Right portal jamb
+    const portalRight = new THREE.Mesh(new THREE.BoxGeometry(0.22, 4.9, 0.4), portalFrameMat);
+    portalRight.position.set(3.0, 2.45, 0);
+    frontEntranceGroup.add(portalRight);
+
+    // Center mullion divider between double doors
+    const portalCenter = new THREE.Mesh(new THREE.BoxGeometry(0.12, 4.8, 0.35), portalFrameMat);
+    portalCenter.position.set(0, 2.4, 0);
+    frontEntranceGroup.add(portalCenter);
+
+    // Double Glass Sliding Doors (Daun Pintu Kaca Temaram)
+    const doorGlassMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.45,
+      roughness: 0.1,
+      metalness: 0.85,
+      side: THREE.DoubleSide,
+    });
+
+    // Left Glass Door Leaf
+    const leftDoor = new THREE.Mesh(new THREE.BoxGeometry(2.8, 4.6, 0.08), doorGlassMat);
+    leftDoor.position.set(-1.45, 2.35, 0);
+    frontEntranceGroup.add(leftDoor);
+
+    // Right Glass Door Leaf
+    const rightDoor = new THREE.Mesh(new THREE.BoxGeometry(2.8, 4.6, 0.08), doorGlassMat);
+    rightDoor.position.set(1.45, 2.35, 0);
+    frontEntranceGroup.add(rightDoor);
+
+    // Frosted Safety Bands on Glass Doors
+    [-1.45, 1.45].forEach((dx) => {
+      const frostBand = new THREE.Mesh(
+        new THREE.BoxGeometry(2.7, 0.25, 0.09),
+        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.3, transparent: true, opacity: 0.6 })
+      );
+      frostBand.position.set(dx, 2.2, 0);
+      frontEntranceGroup.add(frostBand);
+    });
+
+    // Stainless Steel Vertical Tubular Pull Handles
+    const handleMat = new THREE.MeshStandardMaterial({
+      color: 0xf1f5f9,
+      metalness: 0.95,
+      roughness: 0.15,
+    });
+    [-0.2, 0.2].forEach((hx) => {
+      const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.8, 12), handleMat);
+      handle.position.set(hx, 2.2, -0.15);
+      frontEntranceGroup.add(handle);
+    });
+
+    // Grand Illuminated Acrylic Sign above Entrance Doors (Facing Inward)
+    const entranceSignCanvas = document.createElement("canvas");
+    entranceSignCanvas.width = 1024;
+    entranceSignCanvas.height = 256;
+    const esCtx = entranceSignCanvas.getContext("2d");
+    if (esCtx) {
+      esCtx.fillStyle = "#000000";
+      esCtx.fillRect(0, 0, 1024, 256);
+      esCtx.fillStyle = "#e5de00";
+      esCtx.fillRect(10, 10, 1004, 236);
+      esCtx.strokeStyle = "#000000";
+      esCtx.lineWidth = 8;
+      esCtx.strokeRect(10, 10, 1004, 236);
+
+      esCtx.fillStyle = "#000000";
+      esCtx.font = "bold 44px sans-serif";
+      esCtx.textAlign = "center";
+      esCtx.textBaseline = "middle";
+      esCtx.fillText("PINTU MASUK UTAMA // LOBBY MUSEUM", 512, 85);
+
+      esCtx.font = "bold 24px monospace";
+      esCtx.fillStyle = "#1e293b";
+      esCtx.fillText("XII PPLG 1 • WELCOME TO THE MEMORY & SHOWCASE GALLERY", 512, 160);
+    }
+    const entranceSignTex = new THREE.CanvasTexture(entranceSignCanvas);
+    texturesToDispose.push(entranceSignTex);
+
+    const entranceSignMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(6.4, 1.6),
+      new THREE.MeshBasicMaterial({ map: entranceSignTex, side: THREE.FrontSide })
+    );
+    entranceSignMesh.position.set(0, 5.8, -0.22);
+    entranceSignMesh.rotation.y = Math.PI; // Face inward into museum
+    frontEntranceGroup.add(entranceSignMesh);
+
+    // Emergency Exit Door (Pintu Darurat) on Front Left Wall
+    const exitDoorGroup = new THREE.Group();
+    exitDoorGroup.position.set(-11.5, 0, 0);
+
+    const exitFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(2.0, 3.8, 0.12),
+      new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.5 })
+    );
+    exitFrame.position.y = 1.9;
+    exitDoorGroup.add(exitFrame);
+
+    const exitLeaf = new THREE.Mesh(
+      new THREE.BoxGeometry(1.8, 3.6, 0.08),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 })
+    );
+    exitLeaf.position.set(0, 1.9, -0.02);
+    exitDoorGroup.add(exitLeaf);
+
+    const panicBar = new THREE.Mesh(
+      new THREE.BoxGeometry(1.5, 0.08, 0.08),
+      new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.3 })
+    );
+    panicBar.position.set(0, 1.6, -0.1);
+    exitDoorGroup.add(panicBar);
+
+    // Illuminated Green Emergency Exit Sign
+    const exitSignCanvas = document.createElement("canvas");
+    exitSignCanvas.width = 256;
+    exitSignCanvas.height = 96;
+    const exCtx = exitSignCanvas.getContext("2d");
+    if (exCtx) {
+      exCtx.fillStyle = "#10b981";
+      exCtx.fillRect(0, 0, 256, 96);
+      exCtx.strokeStyle = "#000000";
+      exCtx.lineWidth = 4;
+      exCtx.strokeRect(2, 2, 252, 92);
+
+      exCtx.fillStyle = "#ffffff";
+      exCtx.font = "bold 26px sans-serif";
+      exCtx.textAlign = "center";
+      exCtx.textBaseline = "middle";
+      exCtx.fillText("EXIT // DARURAT", 128, 48);
+    }
+    const exitSignTex = new THREE.CanvasTexture(exitSignCanvas);
+    texturesToDispose.push(exitSignTex);
+
+    const exitSignMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.2, 0.45),
+      new THREE.MeshBasicMaterial({ map: exitSignTex, side: THREE.FrontSide })
+    );
+    exitSignMesh.position.set(0, 4.1, -0.12);
+    exitSignMesh.rotation.y = Math.PI;
+    exitDoorGroup.add(exitSignMesh);
+
+    frontEntranceGroup.add(exitDoorGroup);
+    hallGroup.add(frontEntranceGroup);
+
+    // 5B. MUSEUM FOYER: DIRECTORY STAND & RECEPTION DESK
+    const foyerGroup = new THREE.Group();
+
+    // 1. Standing Museum Directory Plaque (Papan Panduan & Denah Museum)
+    const dirCanvas = document.createElement("canvas");
+    dirCanvas.width = 512;
+    dirCanvas.height = 768;
+    const dirCtx = dirCanvas.getContext("2d");
+    if (dirCtx) {
+      dirCtx.fillStyle = "#0f172a";
+      dirCtx.fillRect(0, 0, 512, 768);
+
+      dirCtx.lineWidth = 10;
+      dirCtx.strokeStyle = "#e5de00";
+      dirCtx.strokeRect(5, 5, 502, 758);
+
+      // Header
+      dirCtx.fillStyle = "#e5de00";
+      dirCtx.fillRect(16, 20, 480, 70);
+      dirCtx.fillStyle = "#000000";
+      dirCtx.font = "bold 26px sans-serif";
+      dirCtx.textAlign = "center";
+      dirCtx.fillText("PANDUAN PENGUNJUNG", 256, 62);
+
+      // Section 1: Sayap Kiri
+      dirCtx.fillStyle = "#1e293b";
+      dirCtx.fillRect(24, 110, 464, 120);
+      dirCtx.strokeStyle = "#38bdf8";
+      dirCtx.lineWidth = 2;
+      dirCtx.strokeRect(24, 110, 464, 120);
+
+      dirCtx.fillStyle = "#38bdf8";
+      dirCtx.font = "bold 18px monospace";
+      dirCtx.textAlign = "left";
+      dirCtx.fillText("⬅️ SAYAP KIRI: KELAS 10", 40, 145);
+      dirCtx.fillStyle = "#f8fafc";
+      dirCtx.font = "bold 14px sans-serif";
+      dirCtx.fillText("Galeri Foto Masa Awal & MPLS", 40, 175);
+      dirCtx.fillStyle = "#94a3b8";
+      dirCtx.font = "12px monospace";
+      dirCtx.fillText("42 Foto Perjalanan Angkatan 2024", 40, 202);
+
+      // Section 2: Sayap Kanan
+      dirCtx.fillStyle = "#1e293b";
+      dirCtx.fillRect(24, 250, 464, 120);
+      dirCtx.strokeStyle = "#e5de00";
+      dirCtx.strokeRect(24, 250, 464, 120);
+
+      dirCtx.fillStyle = "#e5de00";
+      dirCtx.font = "bold 18px monospace";
+      dirCtx.fillText("➡️ SAYAP KANAN: KELAS 11", 40, 285);
+      dirCtx.fillStyle = "#f8fafc";
+      dirCtx.font = "bold 14px sans-serif";
+      dirCtx.fillText("Galeri Foto Praktikum & Karya", 40, 315);
+      dirCtx.fillStyle = "#94a3b8";
+      dirCtx.font = "12px monospace";
+      dirCtx.fillText("15 Foto & Master Tech Stack Dashboard", 40, 342);
+
+      // Section 3: Pusat Galeri
+      dirCtx.fillStyle = "#1e293b";
+      dirCtx.fillRect(24, 390, 464, 120);
+      dirCtx.strokeStyle = "#4ade80";
+      dirCtx.strokeRect(24, 390, 464, 120);
+
+      dirCtx.fillStyle = "#4ade80";
+      dirCtx.font = "bold 18px monospace";
+      dirCtx.fillText("⬆️ PUSAT: MONUMEN KODE", 40, 425);
+      dirCtx.fillStyle = "#f8fafc";
+      dirCtx.font = "bold 14px sans-serif";
+      dirCtx.fillText("Showcase Laptop 3D & Source Code", 40, 455);
+      dirCtx.fillStyle = "#94a3b8";
+      dirCtx.font = "12px monospace";
+      dirCtx.fillText("Website Kelas XII PPLG 1 Live!", 40, 482);
+
+      // Section 4: Aturan & Quotes
+      dirCtx.fillStyle = "#090d16";
+      dirCtx.fillRect(24, 530, 464, 210);
+      dirCtx.strokeStyle = "#334155";
+      dirCtx.strokeRect(24, 530, 464, 210);
+
+      dirCtx.fillStyle = "#e2e8f0";
+      dirCtx.font = "bold 15px sans-serif";
+      dirCtx.fillText("📜 ATURAN MUSEUM:", 40, 565);
+      dirCtx.fillStyle = "#94a3b8";
+      dirCtx.font = "13px sans-serif";
+      dirCtx.fillText("1. Klik pigura untuk melihat detail & cerita", 40, 595);
+      dirCtx.fillText("2. Drag mouse / layar untuk putar 360°", 40, 625);
+      dirCtx.fillText("3. Dilarang melupakan kenangan indah!", 40, 655);
+
+      dirCtx.fillStyle = "#38bdf8";
+      dirCtx.font = "bold 12px monospace";
+      dirCtx.fillText("// SMKN 1 DEPOK • ANGKATAN 2024 - 2027", 40, 710);
+    }
+    const dirTex = new THREE.CanvasTexture(dirCanvas);
+    texturesToDispose.push(dirTex);
+
+    // Kiosk Stand
+    const kioskStand = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 1.4, 0.12),
+      new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.3, metalness: 0.6 })
+    );
+    kioskStand.position.set(4.2, 0.7, 11.8);
+    foyerGroup.add(kioskStand);
+
+    const kioskBase = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.45, 0.5, 0.08, 16),
+      new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.4 })
+    );
+    kioskBase.position.set(4.2, 0.04, 11.8);
+    foyerGroup.add(kioskBase);
+
+    // Angled Board Panel
+    const kioskPanel = new THREE.Mesh(
+      new THREE.BoxGeometry(1.2, 1.8, 0.06),
+      new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.3 })
+    );
+    kioskPanel.position.set(4.2, 1.6, 11.8);
+    kioskPanel.rotation.x = -0.25;
+    kioskPanel.rotation.y = Math.PI;
+    foyerGroup.add(kioskPanel);
+
+    const kioskScreen = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.14, 1.72),
+      new THREE.MeshBasicMaterial({ map: dirTex })
+    );
+    kioskScreen.position.set(4.2, 1.6, 11.76);
+    kioskScreen.rotation.x = -0.25;
+    kioskScreen.rotation.y = Math.PI;
+    foyerGroup.add(kioskScreen);
+
+    // 2. Museum Reception / Guestbook Counter Desk
+    const deskGroup = new THREE.Group();
+    deskGroup.position.set(-4.2, 0, 11.8);
+    deskGroup.rotation.y = Math.PI;
+
+    const deskBody = new THREE.Mesh(
+      new THREE.BoxGeometry(2.4, 1.1, 0.9),
+      new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.4 })
+    );
+    deskBody.position.y = 0.55;
+    deskBody.castShadow = true;
+    deskGroup.add(deskBody);
+
+    const deskTop = new THREE.Mesh(
+      new THREE.BoxGeometry(2.5, 0.08, 1.0),
+      new THREE.MeshStandardMaterial({ color: 0xe5de00, roughness: 0.2, metalness: 0.3 })
+    );
+    deskTop.position.y = 1.14;
+    deskGroup.add(deskTop);
+
+    const bookMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(0.5, 0.04, 0.38),
+      new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.6 })
+    );
+    bookMesh.position.set(0.3, 1.2, 0.05);
+    bookMesh.rotation.y = 0.15;
+    deskGroup.add(bookMesh);
+
+    const tabletBase = new THREE.Mesh(
+      new THREE.BoxGeometry(0.32, 0.22, 0.02),
+      new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.2 })
+    );
+    tabletBase.position.set(-0.45, 1.3, 0);
+    tabletBase.rotation.x = -0.4;
+    deskGroup.add(tabletBase);
+
+    foyerGroup.add(deskGroup);
+
+    // 3. Velvet Rope Stanchions flanking entrance aisle
+    const stanchionMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.15 });
+    const ropeMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.8 });
+
+    [-1.8, 1.8].forEach((sx) => {
+      [13.2, 11.0].forEach((sz) => {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.0, 12), stanchionMat);
+        post.position.set(sx, 0.5, sz);
+        foyerGroup.add(post);
+
+        const postBase = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 0.06, 16), stanchionMat);
+        postBase.position.set(sx, 0.03, sz);
+        foyerGroup.add(postBase);
+
+        const postTop = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 12), stanchionMat);
+        postTop.position.set(sx, 1.04, sz);
+        foyerGroup.add(postTop);
+      });
+
+      const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 2.2, 8), ropeMat);
+      rope.position.set(sx, 0.78, 12.1);
+      rope.rotation.x = Math.PI / 2;
+      foyerGroup.add(rope);
+    });
+
+    hallGroup.add(foyerGroup);
+
+    // 5C. SUSPENDED GALLERY TRACK LIGHTS (LAMPU TRACK SOROT MUSEUM)
+    const trackGroup = new THREE.Group();
+    const trackPositionsX = [-11.0, 0, 11.0];
+
+    trackPositionsX.forEach((tx) => {
+      const railGeo = new THREE.BoxGeometry(0.12, 0.08, 24.0);
+      const railMat = new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.4, metalness: 0.7 });
+      const rail = new THREE.Mesh(railGeo, railMat);
+      rail.position.set(tx, 7.2, 0);
+      trackGroup.add(rail);
+
+      [-9, -3, 3, 9].forEach((cz) => {
+        const cable = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.008, 0.008, 0.85, 6),
+          new THREE.MeshBasicMaterial({ color: 0x64748b })
+        );
+        cable.position.set(tx, 7.625, cz);
+        trackGroup.add(cable);
+      });
+
+      [-8, -4, 0, 4, 8].forEach((spotZ) => {
+        const spotHead = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.08, 0.12, 0.22, 12),
+          new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.3 })
+        );
+        spotHead.position.set(tx, 7.08, spotZ);
+        spotHead.rotation.x = 0.2;
+        trackGroup.add(spotHead);
+      });
+    });
+    hallGroup.add(trackGroup);
+
+    // 5D. ADAPTIVE MUSEUM CEILING (ATAP PLAFON GALERI PINTAR DENGAN SKYLIGHT ATRIUM)
+    // Uses THREE.FrontSide with downward normal:
+    // - From outside / above (Y > 8.05, e.g. Hall preset Y=9 or Orbit): CULLED / 100% INVISIBLE!
+    // - From inside looking up (Y < 8.05): VISIBLE with coffered acoustic panels & central glass skylight!
+    const ceilingCanvas = document.createElement("canvas");
+    ceilingCanvas.width = 1024;
+    ceilingCanvas.height = 1024;
+    const cCtx = ceilingCanvas.getContext("2d");
+    if (cCtx) {
+      cCtx.fillStyle = "#0a0f1d";
+      cCtx.fillRect(0, 0, 1024, 1024);
+
+      // Coffered grid lines
+      cCtx.strokeStyle = "#040711";
+      cCtx.lineWidth = 6;
+      for (let x = 0; x <= 1024; x += 128) {
+        cCtx.beginPath();
+        cCtx.moveTo(x, 0);
+        cCtx.lineTo(x, 1024);
+        cCtx.stroke();
+      }
+      for (let y = 0; y <= 1024; y += 128) {
+        cCtx.beginPath();
+        cCtx.moveTo(0, y);
+        cCtx.lineTo(1024, y);
+        cCtx.stroke();
+      }
+
+      // Recessed panel details & downlights
+      for (let x = 0; x < 1024; x += 128) {
+        for (let y = 0; y < 1024; y += 128) {
+          cCtx.fillStyle = "#111927";
+          cCtx.fillRect(x + 5, y + 5, 118, 118);
+
+          // Downlight spot
+          cCtx.fillStyle = "#1e293b";
+          cCtx.beginPath();
+          cCtx.arc(x + 64, y + 64, 14, 0, Math.PI * 2);
+          cCtx.fill();
+
+          cCtx.fillStyle = "#fffbeb";
+          cCtx.beginPath();
+          cCtx.arc(x + 64, y + 64, 6, 0, Math.PI * 2);
+          cCtx.fill();
+        }
+      }
+
+      // Centerpiece Glass Skylight Atrium (Directly above laptop sculpture)
+      cCtx.fillStyle = "#0c1e38";
+      cCtx.fillRect(256, 256, 512, 512);
+
+      cCtx.strokeStyle = "#e5de00";
+      cCtx.lineWidth = 12;
+      cCtx.strokeRect(256, 256, 512, 512);
+
+      cCtx.fillStyle = "#0284c7";
+      cCtx.fillRect(268, 268, 488, 488);
+
+      cCtx.strokeStyle = "#082f49";
+      cCtx.lineWidth = 6;
+      for (let sx = 268 + 122; sx < 756; sx += 122) {
+        cCtx.beginPath();
+        cCtx.moveTo(sx, 268);
+        cCtx.lineTo(sx, 756);
+        cCtx.stroke();
+      }
+      for (let sy = 268 + 122; sy < 756; sy += 122) {
+        cCtx.beginPath();
+        cCtx.moveTo(268, sy);
+        cCtx.lineTo(756, sy);
+        cCtx.stroke();
+      }
+
+      cCtx.fillStyle = "#e5de00";
+      cCtx.font = "bold 26px monospace";
+      cCtx.textAlign = "center";
+      cCtx.textBaseline = "middle";
+      cCtx.fillText("SMKN 1 DEPOK // XII PPLG 1", 512, 512);
+    }
+    const ceilingTex = new THREE.CanvasTexture(ceilingCanvas);
+    ceilingTex.wrapS = THREE.RepeatWrapping;
+    ceilingTex.wrapT = THREE.RepeatWrapping;
+    ceilingTex.repeat.set(1, 1);
+    texturesToDispose.push(ceilingTex);
+
+    const ceilingGeo = new THREE.PlaneGeometry(28.5, 28.5);
+    const ceilingMat = new THREE.MeshStandardMaterial({
+      map: ceilingTex,
+      roughness: 0.85,
+      metalness: 0.1,
+      side: THREE.FrontSide, // Invisible from top/orbit, visible looking up from inside!
+    });
+    const ceilingMesh = new THREE.Mesh(ceilingGeo, ceilingMat);
+    ceilingMesh.position.set(0, 8.05, 0);
+    ceilingMesh.rotation.x = Math.PI / 2; // Normal points straight down (0, -1, 0)
+    ceilingMesh.receiveShadow = true;
+    hallGroup.add(ceilingMesh);
 
     // Freestanding Exhibition Partition Wall in Left Wing (x = -7.0, length 18.0, height 5.8)
     const partitionMesh = new THREE.Mesh(new THREE.BoxGeometry(0.4, 5.8, 18.0), wallMat);
@@ -1346,6 +1926,7 @@ export default function MemoryMuseum3D({
       }
     };
 
+
     const onPointerDown = (e: PointerEvent) => {
       pointerStartX = e.clientX;
       pointerStartY = e.clientY;
@@ -1380,6 +1961,24 @@ export default function MemoryMuseum3D({
     canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointermove", onPointerMove);
     canvas.addEventListener("pointerup", onPointerUp);
+
+    // Keyboard listener for First-Person Walk Mode
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!isWalkModeRef.current) return;
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "KeyW", "KeyA", "KeyS", "KeyD"].includes(e.code)) {
+        e.preventDefault();
+      }
+      keysPressedRef.current[e.key.toLowerCase()] = true;
+      keysPressedRef.current[e.code] = true;
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      keysPressedRef.current[e.key.toLowerCase()] = false;
+      keysPressedRef.current[e.code] = false;
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
 
     // 8. RESIZE LISTENER
     const handleResize = () => {
@@ -1439,6 +2038,75 @@ export default function MemoryMuseum3D({
         }
       }
 
+      // 10A. FIRST-PERSON WALK MODE LOCOMOTION
+      if (isWalkModeRef.current && !anim.active) {
+        const forward = new THREE.Vector3();
+        camera.getWorldDirection(forward);
+        forward.y = 0;
+        forward.normalize();
+
+        const right = new THREE.Vector3();
+        right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+
+        const keys = keysPressedRef.current;
+        const vKeys = virtualMoveRef.current;
+
+        let moveZ = 0;
+        let moveX = 0;
+
+        if (keys["w"] || keys["arrowup"] || keys["KeyW"] || vKeys.forward) moveZ += 1;
+        if (keys["s"] || keys["arrowdown"] || keys["KeyS"] || vKeys.backward) moveZ -= 1;
+        if (keys["d"] || keys["arrowright"] || keys["KeyD"] || vKeys.right) moveX += 1;
+        if (keys["a"] || keys["arrowleft"] || keys["KeyA"] || vKeys.left) moveX -= 1;
+
+        if (moveX !== 0 || moveZ !== 0) {
+          const moveDir = new THREE.Vector3()
+            .addScaledVector(forward, moveZ)
+            .addScaledVector(right, moveX)
+            .normalize();
+
+          const speed = 0.11;
+          const deltaX = moveDir.x * speed;
+          const deltaZ = moveDir.z * speed;
+
+          let targetX = camera.position.x + deltaX;
+          let targetZ = camera.position.z + deltaZ;
+
+          // Museum boundary clamp (room is 28x28m, so [-12.8, 12.8])
+          targetX = THREE.MathUtils.clamp(targetX, -12.8, 12.8);
+          targetZ = THREE.MathUtils.clamp(targetZ, -12.8, 12.8);
+
+          // Central 3D Laptop pedestal collision (radius 2.3m)
+          const distCenter = Math.hypot(targetX, targetZ);
+          if (distCenter < 2.3) {
+            const factor = 2.3 / (distCenter || 1);
+            targetX *= factor;
+            targetZ *= factor;
+          }
+
+          // Left wing partition wall collision (x = -7.0, z: [-9.2, 9.2], thickness: [-7.6, -6.4])
+          if (targetZ >= -9.2 && targetZ <= 9.2) {
+            if (targetX > -7.6 && targetX < -6.4) {
+              targetX = camera.position.x <= -7.0 ? -7.6 : -6.4;
+            }
+          }
+
+          const actualDeltaX = targetX - camera.position.x;
+          const actualDeltaZ = targetZ - camera.position.z;
+
+          camera.position.x = targetX;
+          camera.position.z = targetZ;
+          controls.target.x += actualDeltaX;
+          controls.target.z += actualDeltaZ;
+
+          // Gentle head-bobbing simulation
+          walkBobTimeRef.current += 0.22;
+          camera.position.y = 1.7 + Math.sin(walkBobTimeRef.current) * 0.025;
+        } else {
+          camera.position.y = THREE.MathUtils.lerp(camera.position.y, 1.7, 0.1);
+        }
+      }
+
       // Showcase Laptop continuous rotation & gentle floating hover
       const timeMs = Date.now() * 0.002;
       centerLaptopGroup.rotation.y += 0.012;
@@ -1461,6 +2129,8 @@ export default function MemoryMuseum3D({
     // 11. CLEANUP
     return () => {
       if (queueTimer) clearTimeout(queueTimer);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
       resizeObserver.disconnect();
       observer.disconnect();
       cancelAnimationFrame(animationFrameId);
@@ -1468,6 +2138,7 @@ export default function MemoryMuseum3D({
       canvas.removeEventListener("pointermove", onPointerMove);
       canvas.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("resize", handleResize);
+      texturesToDispose.forEach((tex) => tex.dispose());
       sharedPlaceholderTex.dispose();
       downscaledTexCache.forEach((tex) => tex.dispose());
       downscaledTexCache.clear();
@@ -1561,12 +2232,24 @@ export default function MemoryMuseum3D({
               type="button"
               onClick={() => handlePresetView("dashboard")}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black font-black text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer ${
-                viewPreset === "dashboard" ? "bg-black text-neo-yellow" : "bg-white text-black hover:bg-neutral-100"
+                viewPreset === "dashboard" && !isWalkMode ? "bg-black text-neo-yellow" : "bg-white text-black hover:bg-neutral-100"
               }`}
               title="Sorot Layar Dashboard Statistik Kelas"
             >
               <BarChart3 className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Dashboard Kelas</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleWalkMode}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black font-black text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer ${
+                isWalkMode ? "bg-black text-neo-yellow ring-2 ring-black scale-105" : "bg-white text-black hover:bg-neutral-100"
+              }`}
+              title="Mode Jalan Kaki Virtual (WASD / D-Pad)"
+            >
+              <Footprints className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>{isWalkMode ? "Keluar Jalan" : "Mode Jalan"}</span>
             </button>
           </div>
 
@@ -1617,6 +2300,75 @@ export default function MemoryMuseum3D({
             ref={canvasRef}
             className="w-full h-full block touch-none cursor-grab active:cursor-grabbing outline-none"
           />
+
+          {/* First-Person Walk Mode Instruction Banner */}
+          {isWalkMode && (
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-neo-yellow text-black border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] px-3.5 py-1.5 flex items-center gap-2.5 font-mono text-[11px] sm:text-xs font-black animate-fade-in max-w-[94%]">
+              <Footprints className="w-4 h-4 animate-bounce shrink-0" />
+              <span className="hidden sm:inline">Tekan <strong>W A S D</strong> / Panah untuk Jalan • Drag mouse untuk Menoleh</span>
+              <span className="sm:hidden">Pakai D-Pad • Drag untuk Menoleh</span>
+              <button
+                type="button"
+                onClick={toggleWalkMode}
+                className="ml-1.5 px-2 py-0.5 bg-black text-neo-yellow text-[10px] font-bold uppercase hover:bg-neutral-800 shrink-0 border border-black cursor-pointer"
+              >
+                ✕ Keluar
+              </button>
+            </div>
+          )}
+
+          {/* Virtual D-Pad for Walk Mode (Mobile & Mouse) */}
+          {isWalkMode && (
+            <div className="absolute bottom-4 left-4 z-30 flex flex-col items-center gap-1 bg-black/85 p-2 border-3 border-neo-yellow shadow-[4px_4px_0px_0px_rgba(229,222,0,1)] select-none touch-none animate-fade-in">
+              <button
+                type="button"
+                onPointerDown={(e) => { e.preventDefault(); virtualMoveRef.current.forward = true; }}
+                onPointerUp={(e) => { e.preventDefault(); virtualMoveRef.current.forward = false; }}
+                onPointerLeave={(e) => { e.preventDefault(); virtualMoveRef.current.forward = false; }}
+                onPointerCancel={(e) => { e.preventDefault(); virtualMoveRef.current.forward = false; }}
+                className="w-9 h-9 bg-neo-yellow text-black font-black text-sm flex items-center justify-center border-2 border-black active:bg-yellow-400 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] cursor-pointer touch-none"
+                title="Maju (W)"
+              >
+                ▲
+              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onPointerDown={(e) => { e.preventDefault(); virtualMoveRef.current.left = true; }}
+                  onPointerUp={(e) => { e.preventDefault(); virtualMoveRef.current.left = false; }}
+                  onPointerLeave={(e) => { e.preventDefault(); virtualMoveRef.current.left = false; }}
+                  onPointerCancel={(e) => { e.preventDefault(); virtualMoveRef.current.left = false; }}
+                  className="w-9 h-9 bg-neo-yellow text-black font-black text-sm flex items-center justify-center border-2 border-black active:bg-yellow-400 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] cursor-pointer touch-none"
+                  title="Kiri (A)"
+                >
+                  ◀
+                </button>
+                <button
+                  type="button"
+                  onPointerDown={(e) => { e.preventDefault(); virtualMoveRef.current.backward = true; }}
+                  onPointerUp={(e) => { e.preventDefault(); virtualMoveRef.current.backward = false; }}
+                  onPointerLeave={(e) => { e.preventDefault(); virtualMoveRef.current.backward = false; }}
+                  onPointerCancel={(e) => { e.preventDefault(); virtualMoveRef.current.backward = false; }}
+                  className="w-9 h-9 bg-neo-yellow text-black font-black text-sm flex items-center justify-center border-2 border-black active:bg-yellow-400 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] cursor-pointer touch-none"
+                  title="Mundur (S)"
+                >
+                  ▼
+                </button>
+                <button
+                  type="button"
+                  onPointerDown={(e) => { e.preventDefault(); virtualMoveRef.current.right = true; }}
+                  onPointerUp={(e) => { e.preventDefault(); virtualMoveRef.current.right = false; }}
+                  onPointerLeave={(e) => { e.preventDefault(); virtualMoveRef.current.right = false; }}
+                  onPointerCancel={(e) => { e.preventDefault(); virtualMoveRef.current.right = false; }}
+                  className="w-9 h-9 bg-neo-yellow text-black font-black text-sm flex items-center justify-center border-2 border-black active:bg-yellow-400 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] cursor-pointer touch-none"
+                  title="Kanan (D)"
+                >
+                  ▶
+                </button>
+              </div>
+              <span className="text-[9px] text-neo-yellow font-mono font-bold">KONTROL JALAN</span>
+            </div>
+          )}
 
           {/* Hover Tooltip Overlay for Artworks */}
           {hoveredMemory && !selectedMemory && (

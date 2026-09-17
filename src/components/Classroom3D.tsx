@@ -21,6 +21,7 @@ import {
   Focus,
   X,
   RotateCw,
+  Footprints,
 } from "lucide-react";
 
 export default function Classroom3D() {
@@ -36,6 +37,11 @@ export default function Classroom3D() {
   const [viewMode, setViewMode] = useState<"orbit" | "top" | "teacher" | "back">("orbit");
   const [isAutoRotating, setIsAutoRotating] = useState(false);
   const [isSceneReady, setIsSceneReady] = useState(false);
+  const [isWalkMode, setIsWalkMode] = useState(false);
+  const isWalkModeRef = useRef(false);
+  const keysPressedRef = useRef<Record<string, boolean>>({});
+  const virtualMoveRef = useRef({ forward: false, backward: false, left: false, right: false });
+  const walkBobTimeRef = useRef(0);
 
   // References for animation and control handling
   const controlsRef = useRef<OrbitControls | null>(null);
@@ -94,8 +100,45 @@ export default function Classroom3D() {
     }
   };
 
+  // Toggle First-Person Walk Mode
+  const toggleWalkMode = () => {
+    const nextState = !isWalkMode;
+    setIsWalkMode(nextState);
+    isWalkModeRef.current = nextState;
+
+    if (nextState) {
+      setIsAutoRotating(false);
+      if (controlsRef.current) {
+        controlsRef.current.autoRotate = false;
+        controlsRef.current.minPolarAngle = Math.PI / 4;
+        controlsRef.current.maxPolarAngle = Math.PI * 0.72;
+        controlsRef.current.minDistance = 0.5;
+        controlsRef.current.maxDistance = 2.5;
+      }
+      animateCameraTo(new THREE.Vector3(0, 1.7, 18.0), new THREE.Vector3(0, 1.7, 0));
+    } else {
+      if (controlsRef.current) {
+        controlsRef.current.minPolarAngle = 0.08;
+        controlsRef.current.maxPolarAngle = Math.PI / 2 - 0.02;
+        controlsRef.current.minDistance = 4;
+        controlsRef.current.maxDistance = 50;
+      }
+      handlePresetView("orbit");
+    }
+  };
+
   // Preset camera handlers
   const handlePresetView = (mode: "orbit" | "top" | "teacher" | "back") => {
+    if (isWalkModeRef.current) {
+      setIsWalkMode(false);
+      isWalkModeRef.current = false;
+      if (controlsRef.current) {
+        controlsRef.current.minPolarAngle = 0.08;
+        controlsRef.current.maxPolarAngle = Math.PI / 2 - 0.02;
+        controlsRef.current.minDistance = 4;
+        controlsRef.current.maxDistance = 50;
+      }
+    }
     setViewMode(mode);
     if (isAutoRotating) {
       setIsAutoRotating(false);
@@ -124,6 +167,7 @@ export default function Classroom3D() {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0a0f1d); // Deep futuristic slate
     scene.fog = new THREE.FogExp2(0x0a0f1d, 0.015);
+    const texturesToDispose: THREE.Texture[] = [];
 
     const width = container.clientWidth;
     const height = container.clientHeight || 580;
@@ -194,24 +238,26 @@ export default function Classroom3D() {
     fillLight.position.set(-14, 15, -12);
     scene.add(fillLight);
 
-    // 5. ROOM & FLOOR
-    // Base dark floor
-    const floorGeo = new THREE.PlaneGeometry(32, 36);
+    // 5. ROOM & ARCHITECTURE (ENCLOSED 3D CLASSROOM WITH ADAPTIVE CULLING)
+    // Floor (Spans entire lab from front wall Z=-12 to back wall Z=23)
+    const floorGeo = new THREE.PlaneGeometry(32, 35);
     const floorMat = new THREE.MeshStandardMaterial({
       color: 0x111827,
       roughness: 0.8,
       metalness: 0.1,
     });
     const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+    floorMesh.position.set(0, 0, 5.5);
     floorMesh.rotation.x = -Math.PI / 2;
     floorMesh.receiveShadow = true;
     scene.add(floorMesh);
 
     // Neobrutalism Cyan/Yellow Grid Floor Overlay
     const gridHelper = new THREE.GridHelper(32, 32, 0xe5de00, 0x1f2937);
-    gridHelper.position.y = 0.01;
+    gridHelper.position.set(0, 0.01, 5.5);
     scene.add(gridHelper);
 
+    // 5A. WALLS (FRONT, LEFT, RIGHT, BACK)
     // Front Wall (Behind Whiteboard)
     const wallGeo = new THREE.PlaneGeometry(32, 10);
     const wallMat = new THREE.MeshStandardMaterial({
@@ -223,8 +269,8 @@ export default function Classroom3D() {
     frontWall.receiveShadow = true;
     scene.add(frontWall);
 
-    // Left & Right Architectural Walls (Facing Inward)
-    const sideWallGeo = new THREE.PlaneGeometry(36, 10);
+    // Left & Right Architectural Walls (Facing Inward - FrontSide Culling)
+    const sideWallGeo = new THREE.PlaneGeometry(35, 10);
     const sideWallMat = new THREE.MeshStandardMaterial({
       color: 0x151d2c,
       roughness: 0.9,
@@ -232,16 +278,487 @@ export default function Classroom3D() {
     });
 
     const leftWall = new THREE.Mesh(sideWallGeo, sideWallMat);
-    leftWall.position.set(-15.5, 5, 5);
+    leftWall.position.set(-15.5, 5, 5.5);
     leftWall.rotation.y = Math.PI / 2;
     leftWall.receiveShadow = true;
     scene.add(leftWall);
 
     const rightWall = new THREE.Mesh(sideWallGeo, sideWallMat);
-    rightWall.position.set(15.5, 5, 5);
+    rightWall.position.set(15.5, 5, 5.5);
     rightWall.rotation.y = -Math.PI / 2;
     rightWall.receiveShadow = true;
     scene.add(rightWall);
+
+    // Back Wall (Facing Inward - Invisible when viewed from outside rear Z > 23)
+    const backWallGeo = new THREE.PlaneGeometry(32, 10);
+    const backWallMat = new THREE.MeshStandardMaterial({
+      color: 0x151d2c,
+      roughness: 0.9,
+      side: THREE.FrontSide, // Invisible when looking into room from behind back wall
+    });
+    const backWall = new THREE.Mesh(backWallGeo, backWallMat);
+    backWall.position.set(0, 5, 23);
+    backWall.rotation.y = Math.PI; // Normal points inward (0, 0, -1)
+    backWall.receiveShadow = true;
+    scene.add(backWall);
+
+    // 5B. ADAPTIVE CEILING (ATAP PLAFON PINTAR)
+    // Uses THREE.FrontSide with downward normal:
+    // - From outside / above (Y > 9.95, e.g. Orbit Y=16 or Top Y=26): CULLED / 100% INVISIBLE!
+    // - From inside looking up (Y < 9.95, e.g. Teacher, Back, Desk Zoom): VISIBLE with realistic acoustic tiles!
+    const ceilingCanvas = document.createElement("canvas");
+    ceilingCanvas.width = 1024;
+    ceilingCanvas.height = 1024;
+    const cCtx = ceilingCanvas.getContext("2d");
+    if (cCtx) {
+      // Acoustic tile slate base
+      cCtx.fillStyle = "#18202f";
+      cCtx.fillRect(0, 0, 1024, 1024);
+
+      // Panel grid lines
+      cCtx.strokeStyle = "#0d131f";
+      cCtx.lineWidth = 6;
+      for (let x = 0; x <= 1024; x += 128) {
+        cCtx.beginPath();
+        cCtx.moveTo(x, 0);
+        cCtx.lineTo(x, 1024);
+        cCtx.stroke();
+      }
+      for (let y = 0; y <= 1024; y += 128) {
+        cCtx.beginPath();
+        cCtx.moveTo(0, y);
+        cCtx.lineTo(1024, y);
+        cCtx.stroke();
+      }
+
+      // Panel surface details & AC vents
+      for (let x = 0; x < 1024; x += 128) {
+        for (let y = 0; y < 1024; y += 128) {
+          cCtx.fillStyle = "#1e293b";
+          cCtx.fillRect(x + 5, y + 5, 118, 118);
+
+          // Subtle acoustic micropores
+          cCtx.fillStyle = "#172033";
+          for (let px = x + 20; px < x + 110; px += 24) {
+            for (let py = y + 20; py < y + 110; py += 24) {
+              cCtx.fillRect(px, py, 2, 2);
+            }
+          }
+
+          // HVAC Air Diffuser Vents
+          const isVent = (x === 256 && y === 256) || (x === 640 && y === 256) || (x === 256 && y === 640) || (x === 640 && y === 640);
+          if (isVent) {
+            cCtx.fillStyle = "#090d16";
+            cCtx.fillRect(x + 14, y + 14, 100, 100);
+            cCtx.strokeStyle = "#38bdf8";
+            cCtx.lineWidth = 2;
+            cCtx.strokeRect(x + 14, y + 14, 100, 100);
+            for (let ring = 26; ring <= 44; ring += 8) {
+              cCtx.strokeRect(x + ring, y + ring, 128 - ring * 2, 128 - ring * 2);
+            }
+          }
+        }
+      }
+    }
+    const ceilingTex = new THREE.CanvasTexture(ceilingCanvas);
+    ceilingTex.wrapS = THREE.RepeatWrapping;
+    ceilingTex.wrapT = THREE.RepeatWrapping;
+    ceilingTex.repeat.set(2, 2);
+    texturesToDispose.push(ceilingTex);
+
+    const ceilingGeo = new THREE.PlaneGeometry(32, 35);
+    const ceilingMat = new THREE.MeshStandardMaterial({
+      map: ceilingTex,
+      roughness: 0.85,
+      metalness: 0.05,
+      side: THREE.FrontSide, // Invisible from top/orbit, visible looking up from inside!
+    });
+    const ceilingMesh = new THREE.Mesh(ceilingGeo, ceilingMat);
+    ceilingMesh.position.set(0, 9.95, 5.5);
+    ceilingMesh.rotation.x = Math.PI / 2; // Normal points straight down (0, -1, 0)
+    ceilingMesh.receiveShadow = true;
+    scene.add(ceilingMesh);
+
+    // 5C. SUSPENDED LED TUBE LIGHT FIXTURES (LAMPU GANTUNG LAB)
+    const lightFixtureGroup = new THREE.Group();
+    const fixtureRowsX = [-7.5, 0, 7.5]; // 3 rows above left desks, center aisle, right desks
+
+    fixtureRowsX.forEach((posX) => {
+      // Long linear housing
+      const housingGeo = new THREE.BoxGeometry(0.32, 0.12, 24);
+      const housingMat = new THREE.MeshStandardMaterial({
+        color: 0x0f172a,
+        roughness: 0.4,
+        metalness: 0.7,
+      });
+      const housing = new THREE.Mesh(housingGeo, housingMat);
+      housing.position.set(posX, 9.2, 5.5);
+      lightFixtureGroup.add(housing);
+
+      // Glowing LED diffuser plate on bottom
+      const diffuserGeo = new THREE.PlaneGeometry(0.26, 23.9);
+      const diffuserMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: 0xffffff,
+        emissiveIntensity: 1.4,
+        roughness: 0.2,
+      });
+      const diffuser = new THREE.Mesh(diffuserGeo, diffuserMat);
+      diffuser.position.set(posX, 9.135, 5.5);
+      diffuser.rotation.x = Math.PI / 2;
+      lightFixtureGroup.add(diffuser);
+
+      // Suspension wire cables up to the ceiling
+      const cableZ = [-5, 1, 7, 13];
+      cableZ.forEach((cz) => {
+        const cableGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.75, 6);
+        const cableMat = new THREE.MeshBasicMaterial({ color: 0x64748b });
+        const cable = new THREE.Mesh(cableGeo, cableMat);
+        cable.position.set(posX, 9.575, cz);
+        lightFixtureGroup.add(cable);
+      });
+    });
+    scene.add(lightFixtureGroup);
+
+    // Soft warm lab overhead downlights
+    const downlight1 = new THREE.PointLight(0xfff6e5, 1.1, 20, 2);
+    downlight1.position.set(0, 8.8, -2);
+    scene.add(downlight1);
+
+    const downlight2 = new THREE.PointLight(0xfff6e5, 1.1, 20, 2);
+    downlight2.position.set(0, 8.8, 11);
+    scene.add(downlight2);
+
+    // 5D. CLASSROOM DOORS (PINTU LAB PPLG - RIGHT CORRIDOR WALL)
+    const createClassroomDoor = (doorZ: number, isExit: boolean) => {
+      const doorGroup = new THREE.Group();
+      doorGroup.position.set(15.35, 0, doorZ);
+
+      // Outer Frame (Kusen Pintu)
+      const frameMat = new THREE.MeshStandardMaterial({
+        color: 0x0a0f1d,
+        roughness: 0.5,
+        metalness: 0.3,
+      });
+      // Top frame header
+      const topFrame = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.18, 2.6), frameMat);
+      topFrame.position.set(0, 4.9, 0);
+      doorGroup.add(topFrame);
+      // Left jamb
+      const leftJamb = new THREE.Mesh(new THREE.BoxGeometry(0.2, 4.9, 0.15), frameMat);
+      leftJamb.position.set(0, 2.45, -1.22);
+      doorGroup.add(leftJamb);
+      // Right jamb
+      const rightJamb = new THREE.Mesh(new THREE.BoxGeometry(0.2, 4.9, 0.15), frameMat);
+      rightJamb.position.set(0, 2.45, 1.22);
+      doorGroup.add(rightJamb);
+
+      // Door Leaf (Daun Pintu)
+      const doorLeafMat = new THREE.MeshStandardMaterial({
+        color: 0x1e293b,
+        roughness: 0.35,
+        metalness: 0.2,
+      });
+      const doorLeaf = new THREE.Mesh(new THREE.BoxGeometry(0.12, 4.75, 2.3), doorLeafMat);
+      doorLeaf.position.set(0, 2.4, 0);
+      doorGroup.add(doorLeaf);
+
+      // Glass Observation Window (Kaca Intip Lab)
+      const glassMat = new THREE.MeshStandardMaterial({
+        color: 0x38bdf8,
+        transparent: true,
+        opacity: 0.65,
+        roughness: 0.1,
+        metalness: 0.8,
+      });
+      const glass = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.8, 0.5), glassMat);
+      glass.position.set(0, 2.9, 0.3);
+      doorGroup.add(glass);
+
+      // Stainless Steel Door Handle (Gagang Pintu)
+      const handleMat = new THREE.MeshStandardMaterial({
+        color: 0xe2e8f0,
+        metalness: 0.95,
+        roughness: 0.15,
+      });
+      const handleBar = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.6, 0.05), handleMat);
+      handleBar.position.set(-0.1, 2.3, -0.75);
+      doorGroup.add(handleBar);
+
+      // Bottom Kick Plate (Stainless Protection Plate)
+      const kickPlate = new THREE.Mesh(
+        new THREE.BoxGeometry(0.14, 0.5, 2.26),
+        new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.2 })
+      );
+      kickPlate.position.set(0, 0.3, 0);
+      doorGroup.add(kickPlate);
+
+      // Neobrutalist Door Signboard (Papan Nama Akrilik Pintu)
+      const signCanvas = document.createElement("canvas");
+      signCanvas.width = 512;
+      signCanvas.height = 128;
+      const sCtx = signCanvas.getContext("2d");
+      if (sCtx) {
+        sCtx.fillStyle = isExit ? "#10b981" : "#e5de00";
+        sCtx.fillRect(0, 0, 512, 128);
+        sCtx.lineWidth = 10;
+        sCtx.strokeStyle = "#000000";
+        sCtx.strokeRect(5, 5, 502, 118);
+
+        sCtx.fillStyle = isExit ? "#ffffff" : "#000000";
+        sCtx.font = "bold 38px monospace";
+        sCtx.textAlign = "center";
+        sCtx.textBaseline = "middle";
+        sCtx.fillText(isExit ? "PINTU KELUAR // EXIT" : "PINTU MASUK // LAB PPLG 1", 256, 46);
+
+        sCtx.font = "bold 20px monospace";
+        sCtx.fillStyle = isExit ? "#d1fae5" : "#334155";
+        sCtx.fillText(isExit ? "XII PPLG 1 • JALUR EVAKUASI" : "SMKN 1 DEPOK • ANGKATAN 2024-2027", 256, 92);
+      }
+      const signTex = new THREE.CanvasTexture(signCanvas);
+      texturesToDispose.push(signTex);
+
+      const signGeo = new THREE.PlaneGeometry(2.4, 0.6);
+      const signMat = new THREE.MeshBasicMaterial({ map: signTex, side: THREE.FrontSide });
+      const signMesh = new THREE.Mesh(signGeo, signMat);
+      signMesh.position.set(-0.12, 5.35, 0);
+      signMesh.rotation.y = -Math.PI / 2; // Face inward into classroom
+      doorGroup.add(signMesh);
+
+      return doorGroup;
+    };
+
+    // Add Entrance Door (Front) and Exit Door (Back)
+    scene.add(createClassroomDoor(-8.5, false));
+    scene.add(createClassroomDoor(18.5, true));
+
+    // 5E. CLASSROOM WINDOWS & VENTILATION (JENDELA KACA LAB - LEFT COURTYARD WALL)
+    const windowGroup = new THREE.Group();
+    const windowBayZ = [-6.0, 1.0, 8.0, 15.0]; // 4 Large Architectural Window Bays
+
+    windowBayZ.forEach((wz) => {
+      const winFrameMat = new THREE.MeshStandardMaterial({
+        color: 0x0f172a,
+        roughness: 0.4,
+        metalness: 0.5,
+      });
+
+      // Sill Ledge (Ambang Jendela)
+      const sillGeo = new THREE.BoxGeometry(0.35, 0.12, 3.8);
+      const sillMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
+      const sill = new THREE.Mesh(sillGeo, sillMat);
+      sill.position.set(-15.25, 2.0, wz);
+      windowGroup.add(sill);
+
+      // Translucent Glass Panes
+      const winGlassGeo = new THREE.PlaneGeometry(3.5, 3.8);
+      const winGlassMat = new THREE.MeshStandardMaterial({
+        color: 0x93c5fd,
+        transparent: true,
+        opacity: 0.35,
+        roughness: 0.1,
+        metalness: 0.8,
+        side: THREE.DoubleSide,
+      });
+      const glass = new THREE.Mesh(winGlassGeo, winGlassMat);
+      glass.position.set(-15.35, 3.9, wz);
+      glass.rotation.y = Math.PI / 2;
+      windowGroup.add(glass);
+
+      // Window Mullions (Kosen Pemisah Kaca)
+      [-0.6, 0.6].forEach((offsetY) => {
+        const hMullion = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 3.5), winFrameMat);
+        hMullion.position.set(-15.34, 3.9 + offsetY, wz);
+        windowGroup.add(hMullion);
+      });
+      const vMullion = new THREE.Mesh(new THREE.BoxGeometry(0.08, 3.8, 0.06), winFrameMat);
+      vMullion.position.set(-15.34, 3.9, wz);
+      windowGroup.add(vMullion);
+
+      // Top Ventilation Louver
+      const louverFrame = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.0, 3.6), winFrameMat);
+      louverFrame.position.set(-15.35, 6.4, wz);
+      windowGroup.add(louverFrame);
+
+      for (let ly = 6.0; ly <= 6.8; ly += 0.2) {
+        const slat = new THREE.Mesh(
+          new THREE.BoxGeometry(0.18, 0.03, 3.4),
+          new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 })
+        );
+        slat.position.set(-15.33, ly, wz);
+        slat.rotation.z = 0.3;
+        windowGroup.add(slat);
+      }
+    });
+    scene.add(windowGroup);
+
+    // 5F. CLASSROOM BULLETIN BOARD (MADING KELAS XII PPLG 1 & POSTERS ON BACK WALL)
+    const madingCanvas = document.createElement("canvas");
+    madingCanvas.width = 1024;
+    madingCanvas.height = 512;
+    const mCtx = madingCanvas.getContext("2d");
+    if (mCtx) {
+      // Board background
+      mCtx.fillStyle = "#1e293b";
+      mCtx.fillRect(0, 0, 1024, 512);
+
+      // Border
+      mCtx.lineWidth = 14;
+      mCtx.strokeStyle = "#e5de00";
+      mCtx.strokeRect(7, 7, 1010, 498);
+
+      // Header Banner
+      mCtx.fillStyle = "#e5de00";
+      mCtx.fillRect(20, 20, 984, 80);
+      mCtx.fillStyle = "#000000";
+      mCtx.font = "bold 38px monospace";
+      mCtx.textAlign = "center";
+      mCtx.fillText("MADING KREATIF // XII PPLG 1", 512, 72);
+
+      // Card 1: Rule Lab PPLG 1 (Ganti Jadwal Piket karena gada yang piket)
+      mCtx.fillStyle = "#f8fafc";
+      mCtx.fillRect(36, 116, 290, 360);
+      mCtx.strokeStyle = "#000000";
+      mCtx.lineWidth = 4;
+      mCtx.strokeRect(36, 116, 290, 360);
+
+      mCtx.fillStyle = "#0284c7"; // Sky header
+      mCtx.fillRect(38, 118, 286, 42);
+      mCtx.fillStyle = "#ffffff";
+      mCtx.font = "bold 20px monospace";
+      mCtx.textAlign = "center";
+      mCtx.fillText("RULE LAB PPLG 1", 181, 146);
+
+      mCtx.fillStyle = "#0f172a";
+      mCtx.font = "bold 14px monospace";
+      mCtx.textAlign = "left";
+      mCtx.fillText("1. Jangan ngegame pas Bu Hilda", 48, 192);
+      mCtx.fillText("2. No makan/minum dekat PC lab", 48, 232);
+      mCtx.fillText("3. Wajib git push sblm pulang!", 48, 272);
+      mCtx.fillText("4. AC stay 16°C jangan diubah!", 48, 312);
+      mCtx.fillText("5. Error bareng, solve bareng!", 48, 352);
+      mCtx.fillStyle = "#ef4444";
+      mCtx.fillText("*Gada piket, lab tetep bersih!", 48, 412);
+      mCtx.fillStyle = "#0369a1";
+      mCtx.fillText("*XII PPLG 1 • Solid No Debat!", 48, 442);
+
+      // Card 2: Struktur Organisasi
+      mCtx.fillStyle = "#fef08a";
+      mCtx.fillRect(366, 116, 292, 360);
+      mCtx.strokeRect(366, 116, 292, 360);
+
+      mCtx.fillStyle = "#eab308";
+      mCtx.fillRect(368, 118, 288, 42);
+      mCtx.fillStyle = "#000000";
+      mCtx.textAlign = "center";
+      mCtx.font = "bold 20px monospace";
+      mCtx.fillText("STRUKTUR KELAS", 512, 146);
+
+      mCtx.textAlign = "left";
+      mCtx.fillStyle = "#0f172a";
+      mCtx.font = "bold 15px monospace";
+      mCtx.fillText("Wali Kelas: Bu Hilda M.Kom", 380, 192);
+      mCtx.fillText("Ketua Kelas: Jonni", 380, 232);
+      mCtx.fillText("Wakil: M. Raditya", 380, 272);
+      mCtx.fillText("Sekretaris: Diva S.", 380, 312);
+      mCtx.fillText("Bendahara: Nazwa A.", 380, 352);
+      mCtx.fillStyle = "#059669";
+      mCtx.fillText("Target: Juara 1 LKS & UKK", 380, 412);
+      mCtx.fillText("Slogan: SOLID NO DEBAT!", 380, 442);
+
+      // Card 3: Target Kompetensi & Sticky Notes
+      mCtx.fillStyle = "#f8fafc";
+      mCtx.fillRect(698, 116, 290, 360);
+      mCtx.strokeRect(698, 116, 290, 360);
+
+      mCtx.fillStyle = "#10b981";
+      mCtx.fillRect(700, 118, 286, 42);
+      mCtx.fillStyle = "#ffffff";
+      mCtx.textAlign = "center";
+      mCtx.font = "bold 20px monospace";
+      mCtx.fillText("INFO PRAKTIKUM", 843, 146);
+
+      mCtx.fillStyle = "#f472b6";
+      mCtx.fillRect(714, 180, 120, 100);
+      mCtx.strokeRect(714, 180, 120, 100);
+      mCtx.fillStyle = "#000000";
+      mCtx.font = "bold 13px monospace";
+      mCtx.textAlign = "center";
+      mCtx.fillText("Next.js 15", 774, 215);
+      mCtx.fillText("& Three.js", 774, 235);
+      mCtx.fillText("Ready!", 774, 255);
+
+      mCtx.fillStyle = "#38bdf8";
+      mCtx.fillRect(854, 180, 120, 100);
+      mCtx.strokeRect(854, 180, 120, 100);
+      mCtx.fillStyle = "#000000";
+      mCtx.fillText("UKK 2027", 914, 215);
+      mCtx.fillText("Fullstack", 914, 235);
+      mCtx.fillText("A+", 914, 255);
+
+      mCtx.fillStyle = "#0f172a";
+      mCtx.font = "bold 14px monospace";
+      mCtx.textAlign = "left";
+      mCtx.fillText("“Code is poetry written", 716, 335);
+      mCtx.fillText(" by people who care.”", 716, 360);
+      mCtx.fillStyle = "#64748b";
+      mCtx.fillText("// SMKN 1 DEPOK 2024-2027", 716, 420);
+    }
+    const madingTex = new THREE.CanvasTexture(madingCanvas);
+    texturesToDispose.push(madingTex);
+
+    const madingGeo = new THREE.PlaneGeometry(11.5, 5.0);
+    const madingMat = new THREE.MeshBasicMaterial({ map: madingTex, side: THREE.FrontSide });
+    const madingMesh = new THREE.Mesh(madingGeo, madingMat);
+    madingMesh.position.set(0, 5.0, 22.88);
+    madingMesh.rotation.y = Math.PI; // Face inward into classroom
+    scene.add(madingMesh);
+
+    // Flanking School Motivation Posters
+    const makePoster = (posX: number, headline: string, sub: string, accentColor: string) => {
+      const pCanvas = document.createElement("canvas");
+      pCanvas.width = 384;
+      pCanvas.height = 512;
+      const pCtx = pCanvas.getContext("2d");
+      if (pCtx) {
+        pCtx.fillStyle = "#0f172a";
+        pCtx.fillRect(0, 0, 384, 512);
+        pCtx.lineWidth = 10;
+        pCtx.strokeStyle = accentColor;
+        pCtx.strokeRect(5, 5, 374, 502);
+
+        pCtx.fillStyle = accentColor;
+        pCtx.fillRect(16, 20, 352, 60);
+        pCtx.fillStyle = "#000000";
+        pCtx.font = "bold 26px monospace";
+        pCtx.textAlign = "center";
+        pCtx.fillText(headline, 192, 58);
+
+        pCtx.fillStyle = "#f8fafc";
+        pCtx.font = "bold 20px monospace";
+        pCtx.fillText(sub, 192, 200);
+
+        pCtx.fillStyle = accentColor;
+        pCtx.font = "bold 16px monospace";
+        pCtx.fillText("XII PPLG 1", 192, 430);
+        pCtx.fillStyle = "#94a3b8";
+        pCtx.font = "bold 13px monospace";
+        pCtx.fillText("SMK NEGERI 1 DEPOK", 192, 460);
+      }
+      const pTex = new THREE.CanvasTexture(pCanvas);
+      texturesToDispose.push(pTex);
+
+      const pMesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(3.0, 4.0),
+        new THREE.MeshBasicMaterial({ map: pTex, side: THREE.FrontSide })
+      );
+      pMesh.position.set(posX, 5.2, 22.88);
+      pMesh.rotation.y = Math.PI;
+      return pMesh;
+    };
+
+    scene.add(makePoster(-9.0, "SMK BISA!", "SIAP KERJA • KREATIF", "#e5de00"));
+    scene.add(makePoster(9.0, "PPLG 1 SOLID", "CLEAN CODE • DISIPLIN", "#38bdf8"));
 
     // 6. WHITEBOARD (Dynamic Canvas Texture)
     const boardCanvas = document.createElement("canvas");
@@ -280,11 +797,115 @@ export default function Classroom3D() {
       ctx.fillText("// SMKN 1 DEPOK - ANGKATAN 2024 - 2027", 70, 450);
     }
     const boardTexture = new THREE.CanvasTexture(boardCanvas);
+    texturesToDispose.push(boardTexture);
     const boardGeo = new THREE.PlaneGeometry(14, 6);
     const boardMat = new THREE.MeshBasicMaterial({ map: boardTexture });
     const whiteboard = new THREE.Mesh(boardGeo, boardMat);
     whiteboard.position.set(0, 5, -11.9);
     scene.add(whiteboard);
+
+    // 6A. ANALOG CLASSROOM WALL CLOCK (MOUNTED ABOVE WHITEBOARD)
+    const clockCanvas = document.createElement("canvas");
+    clockCanvas.width = 512;
+    clockCanvas.height = 512;
+    const clkCtx = clockCanvas.getContext("2d");
+    if (clkCtx) {
+      clkCtx.fillStyle = "#ffffff";
+      clkCtx.beginPath();
+      clkCtx.arc(256, 256, 246, 0, Math.PI * 2);
+      clkCtx.fill();
+
+      clkCtx.lineWidth = 18;
+      clkCtx.strokeStyle = "#000000";
+      clkCtx.stroke();
+
+      clkCtx.lineWidth = 4;
+      clkCtx.strokeStyle = "#e5de00";
+      clkCtx.beginPath();
+      clkCtx.arc(256, 256, 232, 0, Math.PI * 2);
+      clkCtx.stroke();
+
+      clkCtx.fillStyle = "#000000";
+      clkCtx.textAlign = "center";
+      clkCtx.textBaseline = "middle";
+      clkCtx.font = "bold 44px sans-serif";
+      const numbers = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+      for (let i = 0; i < 12; i++) {
+        const angle = (i * Math.PI) / 6;
+        const r = 185;
+        const nx = 256 + Math.sin(angle) * r;
+        const ny = 256 - Math.cos(angle) * r;
+        clkCtx.fillText(`${numbers[i]}`, nx, ny);
+      }
+
+      for (let i = 0; i < 60; i++) {
+        const angle = (i * Math.PI) / 30;
+        const r1 = 224;
+        const r2 = i % 5 === 0 ? 210 : 218;
+        clkCtx.lineWidth = i % 5 === 0 ? 5 : 2;
+        clkCtx.beginPath();
+        clkCtx.moveTo(256 + Math.sin(angle) * r1, 256 - Math.cos(angle) * r1);
+        clkCtx.lineTo(256 + Math.sin(angle) * r2, 256 - Math.cos(angle) * r2);
+        clkCtx.stroke();
+      }
+
+      clkCtx.font = "bold 18px monospace";
+      clkCtx.fillStyle = "#475569";
+      clkCtx.fillText("SMKN 1 DEPOK", 256, 170);
+      clkCtx.font = "bold 14px monospace";
+      clkCtx.fillText("XII PPLG 1", 256, 335);
+
+      // Hour Hand (Pointing to ~9)
+      clkCtx.lineWidth = 12;
+      clkCtx.strokeStyle = "#000000";
+      clkCtx.lineCap = "round";
+      clkCtx.beginPath();
+      clkCtx.moveTo(256, 256);
+      clkCtx.lineTo(135, 235);
+      clkCtx.stroke();
+
+      // Minute Hand (Pointing to ~3 - 09:15 AM)
+      clkCtx.lineWidth = 8;
+      clkCtx.beginPath();
+      clkCtx.moveTo(256, 256);
+      clkCtx.lineTo(395, 260);
+      clkCtx.stroke();
+
+      // Red Second Hand
+      clkCtx.lineWidth = 3;
+      clkCtx.strokeStyle = "#ef4444";
+      clkCtx.beginPath();
+      clkCtx.moveTo(256, 256);
+      clkCtx.lineTo(256, 80);
+      clkCtx.stroke();
+
+      // Center Pin
+      clkCtx.fillStyle = "#ef4444";
+      clkCtx.beginPath();
+      clkCtx.arc(256, 256, 10, 0, Math.PI * 2);
+      clkCtx.fill();
+    }
+    const clockTex = new THREE.CanvasTexture(clockCanvas);
+    texturesToDispose.push(clockTex);
+
+    // Clock outer housing
+    const clockCasingGeo = new THREE.CylinderGeometry(0.72, 0.72, 0.08, 32);
+    const clockCasingMat = new THREE.MeshStandardMaterial({
+      color: 0x0f172a,
+      roughness: 0.3,
+      metalness: 0.6,
+    });
+    const clockCasing = new THREE.Mesh(clockCasingGeo, clockCasingMat);
+    clockCasing.position.set(0, 8.85, -11.9);
+    clockCasing.rotation.x = Math.PI / 2;
+    scene.add(clockCasing);
+
+    // Clock Face
+    const clockFaceGeo = new THREE.CircleGeometry(0.68, 32);
+    const clockFaceMat = new THREE.MeshBasicMaterial({ map: clockTex });
+    const clockFace = new THREE.Mesh(clockFaceGeo, clockFaceMat);
+    clockFace.position.set(0, 8.85, -11.85);
+    scene.add(clockFace);
 
     // 6B. AC UNITS (AIR CONDITIONER SPLIT - 16°C DINGIN POL)
     const breezeMeshes: THREE.Mesh[] = [];
@@ -1327,6 +1948,7 @@ export default function Classroom3D() {
       }
     };
 
+
     const onPointerDown = (e: PointerEvent) => {
       pointerStartX = e.clientX;
       pointerStartY = e.clientY;
@@ -1363,6 +1985,24 @@ export default function Classroom3D() {
     canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointermove", onPointerMove);
     canvas.addEventListener("pointerup", onPointerUp);
+
+    // Keyboard listener for First-Person Walk Mode
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!isWalkModeRef.current) return;
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "KeyW", "KeyA", "KeyS", "KeyD"].includes(e.code)) {
+        e.preventDefault();
+      }
+      keysPressedRef.current[e.key.toLowerCase()] = true;
+      keysPressedRef.current[e.code] = true;
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      keysPressedRef.current[e.key.toLowerCase()] = false;
+      keysPressedRef.current[e.code] = false;
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
 
     // 10. RESIZE LISTENER
     const handleResize = () => {
@@ -1408,6 +2048,65 @@ export default function Classroom3D() {
         }
       }
 
+      // 12A. FIRST-PERSON WALK MODE LOCOMOTION
+      if (isWalkModeRef.current && !anim.active) {
+        const forward = new THREE.Vector3();
+        camera.getWorldDirection(forward);
+        forward.y = 0;
+        forward.normalize();
+
+        const right = new THREE.Vector3();
+        right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+
+        const keys = keysPressedRef.current;
+        const vKeys = virtualMoveRef.current;
+
+        let moveZ = 0;
+        let moveX = 0;
+
+        if (keys["w"] || keys["arrowup"] || keys["KeyW"] || vKeys.forward) moveZ += 1;
+        if (keys["s"] || keys["arrowdown"] || keys["KeyS"] || vKeys.backward) moveZ -= 1;
+        if (keys["d"] || keys["arrowright"] || keys["KeyD"] || vKeys.right) moveX += 1;
+        if (keys["a"] || keys["arrowleft"] || keys["KeyA"] || vKeys.left) moveX -= 1;
+
+        if (moveX !== 0 || moveZ !== 0) {
+          const moveDir = new THREE.Vector3()
+            .addScaledVector(forward, moveZ)
+            .addScaledVector(right, moveX)
+            .normalize();
+
+          const speed = 0.11;
+          const deltaX = moveDir.x * speed;
+          const deltaZ = moveDir.z * speed;
+
+          let targetX = camera.position.x + deltaX;
+          let targetZ = camera.position.z + deltaZ;
+
+          // Classroom boundary clamp (room is 32x35m, x: [-14.5, 14.5], z: [-11.0, 21.5])
+          targetX = THREE.MathUtils.clamp(targetX, -14.5, 14.5);
+          targetZ = THREE.MathUtils.clamp(targetZ, -11.0, 21.5);
+
+          // Teacher desk collision (x: [-2.4, 2.4], z: [-9.5, -6.5])
+          if (targetZ >= -9.5 && targetZ <= -6.5 && targetX >= -2.4 && targetX <= 2.4) {
+            targetZ = camera.position.z > -6.5 ? -6.5 : -9.5;
+          }
+
+          const actualDeltaX = targetX - camera.position.x;
+          const actualDeltaZ = targetZ - camera.position.z;
+
+          camera.position.x = targetX;
+          camera.position.z = targetZ;
+          controls.target.x += actualDeltaX;
+          controls.target.z += actualDeltaZ;
+
+          // Gentle head-bobbing simulation
+          walkBobTimeRef.current += 0.22;
+          camera.position.y = 1.7 + Math.sin(walkBobTimeRef.current) * 0.025;
+        } else {
+          camera.position.y = THREE.MathUtils.lerp(camera.position.y, 1.7, 0.1);
+        }
+      }
+
       // Cold air breeze gentle oscillation
       const t = Date.now() * 0.003;
       breezeMeshes.forEach((mesh, idx) => {
@@ -1446,12 +2145,15 @@ export default function Classroom3D() {
 
     // 13. CLEANUP
     return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
       observer.disconnect();
       cancelAnimationFrame(animationFrameId);
       canvas.removeEventListener("pointerdown", onPointerDown);
       canvas.removeEventListener("pointermove", onPointerMove);
       canvas.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("resize", handleResize);
+      texturesToDispose.forEach((tex) => tex.dispose());
       renderer.dispose();
       controls.dispose();
     };
@@ -1575,12 +2277,24 @@ export default function Classroom3D() {
                 type="button"
                 onClick={() => handlePresetView("back")}
                 className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 border-2 border-black font-black text-[11px] sm:text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer ${
-                  viewMode === "back" ? "bg-black text-neo-yellow" : "bg-white text-black hover:bg-neutral-100"
+                  viewMode === "back" && !isWalkMode ? "bg-black text-neo-yellow" : "bg-white text-black hover:bg-neutral-100"
                 }`}
                 title="Tampak dari Belakang ke Whiteboard"
               >
                 <Eye className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Dari Belakang</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={toggleWalkMode}
+                className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 border-2 border-black font-black text-[11px] sm:text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer ${
+                  isWalkMode ? "bg-black text-neo-yellow ring-2 ring-black scale-105" : "bg-white text-black hover:bg-neutral-100"
+                }`}
+                title="Mode Jalan Kaki Virtual (WASD / D-Pad)"
+              >
+                <Footprints className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>{isWalkMode ? "Keluar Jalan" : "Mode Jalan"}</span>
               </button>
             </div>
           </div>
@@ -1591,6 +2305,75 @@ export default function Classroom3D() {
               ref={canvasRef}
               className="w-full h-full block touch-none cursor-grab active:cursor-grabbing outline-none"
             />
+
+            {/* First-Person Walk Mode Instruction Banner */}
+            {isWalkMode && (
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-neo-yellow text-black border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] px-3.5 py-1.5 flex items-center gap-2.5 font-mono text-[11px] sm:text-xs font-black animate-fade-in max-w-[94%]">
+                <Footprints className="w-4 h-4 animate-bounce shrink-0" />
+                <span className="hidden sm:inline">Tekan <strong>W A S D</strong> / Panah untuk Jalan • Drag mouse untuk Menoleh</span>
+                <span className="sm:hidden">Pakai D-Pad • Drag untuk Menoleh</span>
+                <button
+                  type="button"
+                  onClick={toggleWalkMode}
+                  className="ml-1.5 px-2 py-0.5 bg-black text-neo-yellow text-[10px] font-bold uppercase hover:bg-neutral-800 shrink-0 border border-black cursor-pointer"
+                >
+                  ✕ Keluar
+                </button>
+              </div>
+            )}
+
+            {/* Virtual D-Pad for Walk Mode (Mobile & Mouse) */}
+            {isWalkMode && (
+              <div className="absolute bottom-4 left-4 z-30 flex flex-col items-center gap-1 bg-black/85 p-2 border-3 border-neo-yellow shadow-[4px_4px_0px_0px_rgba(229,222,0,1)] select-none touch-none animate-fade-in">
+                <button
+                  type="button"
+                  onPointerDown={(e) => { e.preventDefault(); virtualMoveRef.current.forward = true; }}
+                  onPointerUp={(e) => { e.preventDefault(); virtualMoveRef.current.forward = false; }}
+                  onPointerLeave={(e) => { e.preventDefault(); virtualMoveRef.current.forward = false; }}
+                  onPointerCancel={(e) => { e.preventDefault(); virtualMoveRef.current.forward = false; }}
+                  className="w-9 h-9 bg-neo-yellow text-black font-black text-sm flex items-center justify-center border-2 border-black active:bg-yellow-400 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] cursor-pointer touch-none"
+                  title="Maju (W)"
+                >
+                  ▲
+                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onPointerDown={(e) => { e.preventDefault(); virtualMoveRef.current.left = true; }}
+                    onPointerUp={(e) => { e.preventDefault(); virtualMoveRef.current.left = false; }}
+                    onPointerLeave={(e) => { e.preventDefault(); virtualMoveRef.current.left = false; }}
+                    onPointerCancel={(e) => { e.preventDefault(); virtualMoveRef.current.left = false; }}
+                    className="w-9 h-9 bg-neo-yellow text-black font-black text-sm flex items-center justify-center border-2 border-black active:bg-yellow-400 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] cursor-pointer touch-none"
+                    title="Kiri (A)"
+                  >
+                    ◀
+                  </button>
+                  <button
+                    type="button"
+                    onPointerDown={(e) => { e.preventDefault(); virtualMoveRef.current.backward = true; }}
+                    onPointerUp={(e) => { e.preventDefault(); virtualMoveRef.current.backward = false; }}
+                    onPointerLeave={(e) => { e.preventDefault(); virtualMoveRef.current.backward = false; }}
+                    onPointerCancel={(e) => { e.preventDefault(); virtualMoveRef.current.backward = false; }}
+                    className="w-9 h-9 bg-neo-yellow text-black font-black text-sm flex items-center justify-center border-2 border-black active:bg-yellow-400 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] cursor-pointer touch-none"
+                    title="Mundur (S)"
+                  >
+                    ▼
+                  </button>
+                  <button
+                    type="button"
+                    onPointerDown={(e) => { e.preventDefault(); virtualMoveRef.current.right = true; }}
+                    onPointerUp={(e) => { e.preventDefault(); virtualMoveRef.current.right = false; }}
+                    onPointerLeave={(e) => { e.preventDefault(); virtualMoveRef.current.right = false; }}
+                    onPointerCancel={(e) => { e.preventDefault(); virtualMoveRef.current.right = false; }}
+                    className="w-9 h-9 bg-neo-yellow text-black font-black text-sm flex items-center justify-center border-2 border-black active:bg-yellow-400 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] cursor-pointer touch-none"
+                    title="Kanan (D)"
+                  >
+                    ▶
+                  </button>
+                </div>
+                <span className="text-[9px] text-neo-yellow font-mono font-bold">KONTROL JALAN</span>
+              </div>
+            )}
 
             {/* Hover Tooltip Overlay */}
             {hoveredStudent && !selectedStudent && !isTeacherSelected && (
