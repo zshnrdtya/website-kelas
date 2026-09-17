@@ -34,14 +34,20 @@ Untuk izin penggunaan atau klarifikasi, silakan hubungi kami via Instagram resmi
 
 1. **First Fold 100dvh (Fit Satu Layar Penuh)**:
    - Header Hero berpadu dengan logo resmi OneDek & PPLG serta running logo Tech Stack pas dalam 1 layar tinggi perangkat (`100dvh`) tanpa harus scroll saat pertama kali dibuka.
-2. **Ruang Kelas 3D Interaktif (Three.js WebGL)**:
-   - Visualisasi 3D tata letak bangku & PC **35 siswa** XII PPLG 1 (22 Siswa Laki-laki & 13 Siswi Perempuan) dalam format ruang kelas virtual modern lengkap dengan Meja Guru Bu Hilda dan Whiteboard.
-   - Kontrol kamera 360° Orbit (drag untuk putar, scroll untuk zoom in/out, dan tombol Auto-Putar 360°).
-   - Tombol preset sudut pandang: **Mode 3D Bebas**, **Tampak Atas (2D Blueprint)**, **Meja Guru**, dan **Dari Belakang**.
+2. **Ruang Kelas 3D Interaktif & Realistis (Three.js WebGL)**:
+   - **Arsitektur Kelas Tertutup Penuh (*Fully Enclosed*)**: Dilengkapi plafon modular akustik, lampu tabung gantung LED, pintu masuk utama lab dengan signage neon `[ PINTU MASUK // LAB PPLG 1 ]`, pintu keluar belakang, jendela lorong kaca & kisi-kisi ventilasi, jam dinding analog aktif di atas whiteboard, AC split ganda dengan efek embusan angin sejuk (*breeze meshes*), serta papan aturan kejuruan **`RULE LAB PPLG 1`**.
+   - Visualisasi 3D tata letak bangku & PC **35 siswa** XII PPLG 1 (22 Siswa Laki-laki & 13 Siswi Perempuan) dalam format lab komputer modern lengkap dengan Meja Guru Bu Hilda dan Whiteboard.
+   - **🚶‍♂️ Mode Jalan Santai (First-Person Walk Mode)**:
+     - **Desktop**: Jelajahi ruang kelas dengan keyboard **W A S D** / Tombol Panah dan drag mouse untuk menoleh.
+     - **Mobile / HP**: Otomatis memunculkan **Virtual D-Pad On-Screen Gamepad** (▲ ▼ ◀ ▶) ramah sentuhan (*touch-friendly & anti-scroll*).
+     - Dilengkapi *Collision Detection* (tidak bisa menembus dinding atau meja guru) dan simulasi langkah kaki (*gentle head-bobbing*).
+   - **Mode Kamera Orbit 360°**: Drag untuk putar sudut pandang, scroll untuk zoom in/out, dan tombol Auto-Putar 360°.
+   - Tombol preset sudut pandang: **Mode 3D Bebas (Orbit)**, **Tampak Atas (2D Blueprint)**, **Meja Guru**, dan **Dari Belakang**.
    - **Interaktif (Hover & Click Raycaster)**: Meja menyala kuning saat diarahkan kursor, dan menampilkan modal profil siswa lengkap (Nomor Meja, Baris, Sayap, Peran Fullstack Developer, dan Quote) saat diklik.
    - Fitur **Cari Siswa Instan**: Ketik nama temanmu untuk langsung mengarahkan kamera 3D ke mejanya!
 3. **🏛️ Museum Kenangan 3D Virtual Art (Three.js WebGL)**:
-   - Aula museum pameran virtual megah berestetika Neobrutalism murni dengan lantai ubin slate gelap dan dinding pameran putih ber-crown moulding emas.
+   - **Arsitektur Paviliun Modern Tertutup**: Plafon megah berhias Atrium Kaca Transparan (*Glass Skylight Atrium*) bertuliskan neon `SMKN 1 DEPOK // XII PPLG 1`, lobby dinding depan dengan Pintu Geser Kaca Ganda (*Double Glass Sliding Doors*) ber-signage illuminated, Meja Resepsionis (*Reception Desk*) lengkap dengan buku tamu & tablet iPad direktori, Standing Directory Kiosk, pintu darurat, dan tiang antrean tali beludru merah (*Velvet Rope Stanchions*).
+   - **🚶‍♂️ Mode Jalan Santai Galeri**: Pengunjung dapat berjalan kaki menyusuri selasar pameran karya memori foto menggunakan keyboard WASD atau Virtual D-Pad di HP dengan batas tabrakan (*collision detection*) di sekitar partisi sayap dan monumen tengah.
    - **57 Bingkai Foto Autentik**:
      - **Sayap Kiri**: Dokumentasi Kelas 10 (42 foto) yang tertata di dinding utama dan partisi pameran dua sisi lengkap dengan lampu sorot museum (*overhead spotlights*).
      - **Sayap Kanan**: Dokumentasi Kelas 11 (15 foto).
