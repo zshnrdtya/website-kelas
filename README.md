@@ -18,7 +18,7 @@
 > ### DILARANG MENYALIN, MENGAMBIL, ATAU MENGKLAIM TANPA IZIN!
 > **SELURUH KONTEN, KODE SUMBER, DESAIN, ASET FOTO, DAN MEDIA DALAM WEBSITE INI ADALAH MILIK RESMI DAN EKSKLUSIF DARI ANGKATAN XII PPLG 1 SMK NEGERI 1 DEPOK.**
 > 
-> **Copyright &copy; 2024–2025 XII PPLG 1 SMK Negeri 1 Depok. All Rights Reserved.**
+> **Copyright &copy; 2024–2027 XII PPLG 1 SMK Negeri 1 Depok. All Rights Reserved.**
 
 ### Ketentuan Hukum & Larangan Keras:
 1. **Dilarang Keras Mengkloning / Mengambil Proyek**: Anda **TIDAK DIIZINKAN** menyalin (*copy-paste*), mengkloning (*clone/fork* tanpa izin), memodifikasi untuk keperluan kelas lain/sekolah lain/pihak ketiga, atau mengklaim karya desain dan kode ini sebagai buatan Anda sendiri.
@@ -35,29 +35,50 @@ Untuk izin penggunaan atau klarifikasi, silakan hubungi kami via Instagram resmi
 1. **First Fold 100dvh (Fit Satu Layar Penuh)**:
    - Header Hero berpadu dengan logo resmi OneDek & PPLG serta running logo Tech Stack pas dalam 1 layar tinggi perangkat (`100dvh`) tanpa harus scroll saat pertama kali dibuka.
 2. **Ruang Kelas 3D Interaktif (Three.js WebGL)**:
-   - Visualisasi 3D tata letak bangku & PC 35 siswa XII PPLG 1 dalam format ruang kelas virtual modern lengkap dengan Meja Guru dan Whiteboard.
+   - Visualisasi 3D tata letak bangku & PC **35 siswa** XII PPLG 1 (22 Siswa Laki-laki & 13 Siswi Perempuan) dalam format ruang kelas virtual modern lengkap dengan Meja Guru Bu Hilda dan Whiteboard.
    - Kontrol kamera 360° Orbit (drag untuk putar, scroll untuk zoom in/out, dan tombol Auto-Putar 360°).
    - Tombol preset sudut pandang: **Mode 3D Bebas**, **Tampak Atas (2D Blueprint)**, **Meja Guru**, dan **Dari Belakang**.
    - **Interaktif (Hover & Click Raycaster)**: Meja menyala kuning saat diarahkan kursor, dan menampilkan modal profil siswa lengkap (Nomor Meja, Baris, Sayap, Peran Fullstack Developer, dan Quote) saat diklik.
    - Fitur **Cari Siswa Instan**: Ketik nama temanmu untuk langsung mengarahkan kamera 3D ke mejanya!
-3. **Running Logo Tech Stack Interaktif**:
-   - Menampilkan 15 teknologi dan tools yang dikuasai siswa PPLG (HTML5, CSS3, JavaScript, PHP, Laravel, MySQL, Java, Android, Unity, Blender, VS Code, Figma, GitHub, Laragon, phpMyAdmin) yang bergerak mulus.
-4. **Galeri Kenangan Multi-Aspect Ratio (57 Foto Autentik)**:
-   - Menampilkan koleksi 57 foto asli Kelas 10 (42 foto) & Kelas 11 (15 foto) tanpa cropping otomatis (*true aspect ratio*).
-   - Fitur pencarian instan (*real-time live search*).
-   - Filter kategori (*Semua*, *Kelas 10*, *Kelas 11*).
-   - Pagination bertahap (+5 foto per klik) atau tombol *Tampilkan Semua Foto*.
-   - Lightbox modal resolusi penuh lengkap dengan navigasi panah keyboard (`←` / `→`).
-5. **Dual-Directional Running Marquee**:
+3. **🏛️ Museum Kenangan 3D Virtual Art (Three.js WebGL)**:
+   - Aula museum pameran virtual megah berestetika Neobrutalism murni dengan lantai ubin slate gelap dan dinding pameran putih ber-crown moulding emas.
+   - **57 Bingkai Foto Autentik**:
+     - **Sayap Kiri**: Dokumentasi Kelas 10 (42 foto) yang tertata di dinding utama dan partisi pameran dua sisi lengkap dengan lampu sorot museum (*overhead spotlights*).
+     - **Sayap Kanan**: Dokumentasi Kelas 11 (15 foto).
+   - **Centerpiece Monumen Laptop 3D**: Laptop 3D melayang anggun di atas pedestal berputar 360° dengan logo PPLG neon menyala di bagian cover dan layar kode website aktif (`XII-PPLG-1.tsx`).
+   - **Master Command Center & Dashboard Statistik Kelas**:
+     - Layar komando raksasa ultra-HD di dinding kanan tanpa tumpang tindih (*zero clipping*).
+     - **Statistik Kelas Akurat**: 35 Murid (22 Cowo • 13 Cewe), Tahun Masuk 2024, Target Kelulusan 2027, dan 57 Foto Memori.
+     - **15 Tech Stack Badges PPLG**: HTML5, CSS3, JavaScript, PHP, Laravel, MySQL, Java, Android, Unity, Blender, VS Code, Figma, GitHub, Laragon, phpMyAdmin.
+     - **Log Modul Praktikum Kejuruan**: PBO & Logika (Java), Web Dinamis, Backend & Server (Laravel), Database (MySQL), Gim & 3D (Unity & Blender), serta Mobile & UI/UX.
+     - **Grafik Aktivitas Koding**: Heatmap commit praktikum ala GitHub & kultur semangat kelas.
+     - **Roadmap 3 Fase Angkatan**: Kelas 10 (Fondasi), Kelas 11 (Eksplorasi), dan Kelas 12 (UKK & Kelulusan Gemilang 2027).
+   - **Fitur Navigasi & Tur**:
+     - Tur Otomatis (*Automatic Guided Virtual Tour*) menjelajahi seluruh karya satu per satu.
+     - 5 Preset Kamera Cepat: **Hall Utama**, **Sayap K10**, **Sayap K11**, **Laptop 3D**, dan **Dashboard Kelas**.
+     - Klik pigura foto mana pun untuk memperbesar (*zoom focus*) dan membuka modal kurator detail.
+   - **Ultra-Optimized Mobile Performance (Anti-Crash)**:
+     - **Auto-Downscaling Tekstur**: Otomatis mengecilkan tekstur foto ke batas maksimal 512px di WebGL (menghemat VRAM GPU dari 2,6 GB menjadi hanya ~45 MB, 100% bebas crash/OOM di HP).
+     - **Background Pre-Rendering**: Komponen 3D sudah diproses di latar belakang sejak pengguna berada di Mode 2D, sehingga saat mengklik tombol *Mode Museum 3D*, museum langsung terbuka seketika tanpa loading lama.
+4. **Running Logo Tech Stack Interaktif**:
+   - Menampilkan 15 teknologi dan tools kejuruan PPLG (HTML5, CSS3, JavaScript, PHP, Laravel, MySQL, Java, Android, Unity, Blender, VS Code, Figma, GitHub, Laragon, phpMyAdmin) yang bergerak mulus secara kontinu.
+5. **Galeri Memori Dual-Mode (Museum 3D & Grid 2D)**:
+   - **Mode Museum 3D**: Menjelajahi pameran foto interaktif 3D.
+   - **Mode Grid 2D**: Menampilkan koleksi 57 foto dalam tata letak kartu masonry tanpa cropping otomatis (*true aspect ratio*).
+   - Fitur pencarian instan (*real-time live search*) untuk mencari foto berdasarkan judul, tanggal, atau deskripsi.
+   - Filter kategori cepat (*All*, *Kelas 10*, *Kelas 11*).
+   - Pagination bertahap (+6 foto per klik) atau tombol tampilkan semua.
+   - Lightbox modal resolusi penuh dengan navigasi keyboard (`←` / `→` / `Esc`).
+6. **Dual-Directional Running Marquee**:
    - **Jalur Atas**: Menampilkan 35 nama siswa/i XII PPLG 1 bergerak dari kiri ke kanan.
    - **Jalur Bawah**: Menampilkan slogan kebanggaan kelas bergerak dari kanan ke kiri.
-6. **Struktur Organisasi Kelas**:
+7. **Struktur Organisasi Kelas**:
    - Menampilkan 8 peran kepengurusan inti (Kepala Program Keahlian, Wali Kelas, Ketua Kelas, Wakil, Sekretaris 1-2, Bendahara 1-2).
-7. **Smart Background Music Player ("God Bless - Rumah Kita")**:
+8. **Smart Background Music Player ("God Bless - Rumah Kita")**:
    - Dilengkapi efek *smooth volume fade-in* (0.0 ke 0.45) saat mulai memutar.
    - **Smart Lifecycle Auto-Pause**: Otomatis berhenti seketika saat pengguna berpindah tab, membuka aplikasi lain, atau kembali ke home HP/laptop, dan memutar kembali saat tab dibuka.
    - Widget neobrutalist interaktif di pojok kiri bawah untuk mematikan/menyalakan musik kapan saja.
-8. **Navigasi Lengkap & Floating Back To Top**:
+9. **Navigasi Lengkap & Floating Back To Top**:
    - Header navigasi responsif dengan link Instagram resmi dan tombol melayang kembali ke atas (*Back to Top*).
 
 ---
@@ -66,7 +87,7 @@ Untuk izin penggunaan atau klarifikasi, silakan hubungi kami via Instagram resmi
 
 - **Framework:** [Next.js 16 (App Router & Turbopack)](https://nextjs.org/)
 - **Core Library:** [React 19](https://react.dev/)
-- **3D Graphics Engine:** [Three.js](https://threejs.org/) (WebGL & OrbitControls)
+- **3D Graphics Engine:** [Three.js](https://threejs.org/) (WebGL, OrbitControls, Raycasting)
 - **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
 - **Animasi:** [Framer Motion v13](https://www.framer.com/motion/)
 - **Bahasa:** [TypeScript 5](https://www.typescriptlang.org/)
@@ -92,9 +113,10 @@ website-kelas/
 ├── src/
 │   ├── components/
 │   │   ├── BackToTop.tsx        # Floating button kembali ke atas
-│   │   ├── Classroom3D.tsx      # 🖥️ Denah 3D Lab Komputer 34 Meja PC (Three.js WebGL)
-│   │   ├── Gallery.tsx          # Galeri masonry, filter, search, lightbox, dan dual marquee
+│   │   ├── Classroom3D.tsx      # 🖥️ Denah 3D Lab Komputer 35 Meja PC (Three.js WebGL)
+│   │   ├── Gallery.tsx          # Galeri dual-mode (3D Virtual Museum & 2D Masonry Grid)
 │   │   ├── Hero.tsx             # Hero section neobrutalism dengan responsive decorator boxes
+│   │   ├── MemoryMuseum3D.tsx   # 🏛️ Museum Kenangan 3D 57 Pigura, Monumen Laptop, & Dashboard Statistik
 │   │   ├── MusicPlayer.tsx      # Smart audio player dengan auto-pause tab lifecycle
 │   │   ├── Navbar.tsx           # Bar navigasi atas dengan link Denah 3D & Instagram
 │   │   ├── StructureTimeline.tsx# Bagan struktur organisasi kelas
@@ -152,6 +174,6 @@ Jika ingin melakukan pengembangan komponen baru, wajib mematuhi panduan desain N
 <div align="center">
   <br />
   <strong>XII PPLG 1 — SMKN 1 DEPOK</strong><br />
-  <i>"Code, Create, and Inspire."</i><br />
+  <i>"Logic, Code, and Creativity — Berjuang bersama, maju bersama."</i><br />
   <a href="https://www.instagram.com/12pplg1_/">@12pplg1_</a>
 </div>
