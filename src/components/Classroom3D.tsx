@@ -139,7 +139,7 @@ export default function Classroom3D() {
       powerPreference: "high-performance",
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -179,8 +179,8 @@ export default function Classroom3D() {
     const dirLight = new THREE.DirectionalLight(0xfff8db, 2.2);
     dirLight.position.set(12, 22, 14);
     dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.mapSize.height = 1024;
     dirLight.shadow.camera.near = 0.5;
     dirLight.shadow.camera.far = 60;
     dirLight.shadow.camera.left = -18;
@@ -277,7 +277,7 @@ export default function Classroom3D() {
 
       ctx.fillStyle = "#ef4444";
       ctx.font = "bold 30px monospace";
-      ctx.fillText("// SMKN 1 DEPOK - ANGKATAN 2024/2025", 70, 450);
+      ctx.fillText("// SMKN 1 DEPOK - ANGKATAN 2024 - 2027", 70, 450);
     }
     const boardTexture = new THREE.CanvasTexture(boardCanvas);
     const boardGeo = new THREE.PlaneGeometry(14, 6);
@@ -1375,11 +1375,26 @@ export default function Classroom3D() {
     };
     window.addEventListener("resize", handleResize);
 
-    // 11. ANIMATION LOOP
+    // 11. INTERSECTION OBSERVER (Zero GPU/CPU cost when scrolled out of view)
+    let isVisible = true;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          isVisible = entry.isIntersecting;
+        });
+      },
+      { threshold: 0.05 }
+    );
+    if (container) observer.observe(container);
+
+    // 12. ANIMATION LOOP
     let animationFrameId: number;
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
+
+      // Skip all calculations and rendering when element is off-screen!
+      if (!isVisible) return;
 
       // Handle smooth camera interpolation when preset or student is clicked
       const anim = animationTargetRef.current;
@@ -1429,8 +1444,9 @@ export default function Classroom3D() {
 
     animate();
 
-    // 12. CLEANUP
+    // 13. CLEANUP
     return () => {
+      observer.disconnect();
       cancelAnimationFrame(animationFrameId);
       canvas.removeEventListener("pointerdown", onPointerDown);
       canvas.removeEventListener("pointermove", onPointerMove);
