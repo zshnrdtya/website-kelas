@@ -9,7 +9,6 @@ import { Landmark, LayoutGrid, Search, X, ChevronLeft, ChevronRight } from "luci
 export default function Gallery() {
   const ITEMS_PER_LOAD = 6;
   const [galleryMode, setGalleryMode] = useState<"3d" | "grid">("grid");
-  const [hasActivated3D, setHasActivated3D] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -111,7 +110,6 @@ export default function Gallery() {
             <button
               type="button"
               onClick={() => {
-                setHasActivated3D(true);
                 setGalleryMode("3d");
                 setSelectedIndex(null);
               }}
@@ -148,16 +146,23 @@ export default function Gallery() {
           </div>
         </div>
 
-        {/* 3D Museum: Only rendered after user clicks "Mode Museum 3D" */}
-        {hasActivated3D && (
-          <div className={`mb-6 ${galleryMode === "3d" ? "block" : "hidden"}`}>
-            <MemoryMuseum3D
-              onOpenLightbox={(idx) => setSelectedIndex(idx)}
-              selectedCategory={activeCategory}
-              onCategoryChange={(cat) => handleCategoryChange(cat)}
-            />
-          </div>
-        )}
+        {/* 3D Museum: Pre-rendered in background so switching to 3D is instant */}
+        <div
+          className={`mb-6 transition-opacity duration-200 ${
+            galleryMode === "3d"
+              ? "relative opacity-100 pointer-events-auto block"
+              : "fixed -top-[9999px] left-0 w-full opacity-0 pointer-events-none"
+          }`}
+          aria-hidden={galleryMode !== "3d"}
+        >
+          <MemoryMuseum3D
+            isActive={galleryMode === "3d"}
+            onOpenLightbox={(idx) => setSelectedIndex(idx)}
+            selectedCategory={activeCategory}
+            onCategoryChange={(cat) => handleCategoryChange(cat)}
+          />
+        </div>
+
 
         {/* 2D Grid Mode */}
         <div className={galleryMode === "grid" ? "block" : "hidden"}>

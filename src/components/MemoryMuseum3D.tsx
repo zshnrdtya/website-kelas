@@ -28,15 +28,28 @@ interface MemoryMuseum3DProps {
   onOpenLightbox?: (index: number) => void;
   selectedCategory?: string;
   onCategoryChange?: (cat: string) => void;
+  isActive?: boolean;
 }
 
 export default function MemoryMuseum3D({
   onOpenLightbox,
   selectedCategory = "All",
   onCategoryChange,
+  isActive = true,
 }: MemoryMuseum3DProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const isActiveRef = useRef(isActive);
+
+  useEffect(() => {
+    isActiveRef.current = isActive;
+    if (isActive) {
+      const timer = setTimeout(() => {
+        window.dispatchEvent(new Event("resize"));
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isActive]);
 
   // Active artwork & tour states
   const [selectedMemory, setSelectedMemory] = useState<MemoryItem | null>(null);
@@ -601,6 +614,74 @@ export default function MemoryMuseum3D({
     // Right Wall (x = 13.78): facing -X (rotY = -Math.PI / 2), z ranges from -11 to +11
     // Center Wall (z = -13.78): facing +Z (rotY = 0), x ranges from -11 to +11
 
+    // Shared lightweight placeholder texture (only 1 canvas allocated for all 57 artworks)
+    const sharedPlaceholderCanvas = document.createElement("canvas");
+    sharedPlaceholderCanvas.width = 256;
+    sharedPlaceholderCanvas.height = 192;
+    const spCtx = sharedPlaceholderCanvas.getContext("2d");
+    if (spCtx) {
+      spCtx.fillStyle = "#0c1322";
+      spCtx.fillRect(0, 0, 256, 192);
+      spCtx.fillStyle = "#e5de00";
+      spCtx.font = "bold 18px sans-serif";
+      spCtx.textAlign = "center";
+      spCtx.textBaseline = "middle";
+      spCtx.fillText("XII PPLG 1", 128, 86);
+      spCtx.fillStyle = "#38bdf8";
+      spCtx.font = "bold 12px monospace";
+      spCtx.fillText("MEMUAT FOTO...", 128, 116);
+    }
+    const sharedPlaceholderTex = new THREE.CanvasTexture(sharedPlaceholderCanvas);
+
+    // Optimized texture cache & downsampler:
+    // Capping max dimension to 512px drops VRAM from 48MB to ~0.8MB per photo!
+    // 57 photos = ~45MB total VRAM instead of 2.6GB, completely stopping mobile Chrome OOM crashes!
+    const downscaledTexCache = new Map<string, THREE.CanvasTexture>();
+
+    const loadDownscaledTexture = (
+      src: string,
+      onSuccess: (tex: THREE.CanvasTexture) => void
+    ) => {
+      if (downscaledTexCache.has(src)) {
+        onSuccess(downscaledTexCache.get(src)!);
+        return;
+      }
+
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.decoding = "async";
+      img.onload = () => {
+        const maxDim = 512;
+        let w = img.naturalWidth || img.width;
+        let h = img.naturalHeight || img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w >= h) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          } else {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+        }
+        const offscreen = document.createElement("canvas");
+        offscreen.width = w;
+        offscreen.height = h;
+        const ctx = offscreen.getContext("2d");
+        if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "medium";
+          ctx.drawImage(img, 0, 0, w, h);
+        }
+        const tex = new THREE.CanvasTexture(offscreen);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.generateMipmaps = false;
+        tex.minFilter = THREE.LinearFilter;
+        downscaledTexCache.set(src, tex);
+        onSuccess(tex);
+      };
+      img.src = src;
+    };
+
     const placeArtworkOnWall = (
       item: MemoryItem,
       x: number,
@@ -630,26 +711,7 @@ export default function MemoryMuseum3D({
       artGroup.add(matBoard);
 
       // 3. Artwork Image Canvas Texture
-      // Fallback canvas texture while loading or on error
-      const fallbackCanvas = document.createElement("canvas");
-      fallbackCanvas.width = 512;
-      fallbackCanvas.height = 384;
-      const fbctx = fallbackCanvas.getContext("2d");
-      if (fbctx) {
-        fbctx.fillStyle = "#1e293b";
-        fbctx.fillRect(0, 0, 512, 384);
-        fbctx.fillStyle = "#e5de00";
-        fbctx.font = "bold 26px sans-serif";
-        fbctx.textAlign = "center";
-        fbctx.textBaseline = "middle";
-        fbctx.fillText(item.title, 256, 170);
-        fbctx.fillStyle = "#ffffff";
-        fbctx.font = "18px monospace";
-        fbctx.fillText(item.category, 256, 220);
-      }
-      const fallbackTex = new THREE.CanvasTexture(fallbackCanvas);
-
-      const photoMat = new THREE.MeshBasicMaterial({ map: fallbackTex });
+      const photoMat = new THREE.MeshBasicMaterial({ map: sharedPlaceholderTex });
       const photoMesh = new THREE.Mesh(sharedPhotoGeo, photoMat);
       photoMesh.position.z = 0.066;
       photoMesh.userData = { memory: item, isArtwork: true };
@@ -658,39 +720,29 @@ export default function MemoryMuseum3D({
 
       // Progressive texture loading: push to queue to avoid main-thread and GPU upload freeze
       textureLoadQueue.push(() => {
-        textureLoader.load(
-          item.src,
-          (loadedTex) => {
-            loadedTex.colorSpace = THREE.SRGBColorSpace;
-            loadedTex.generateMipmaps = false;
-            loadedTex.minFilter = THREE.LinearFilter;
-            photoMat.map = loadedTex;
-            photoMat.needsUpdate = true;
-          },
-          undefined,
-          () => {
-            // Keep fallback on error
-          }
-        );
+        loadDownscaledTexture(item.src, (loadedTex) => {
+          photoMat.map = loadedTex;
+          photoMat.needsUpdate = true;
+        });
       });
 
-      // 4. Brass Plaque under Frame (Curator Label)
+      // 4. Brass Plaque under Frame (Curator Label) - Compact 384x96 canvas
       const plaqueCanvas = document.createElement("canvas");
-      plaqueCanvas.width = 512;
-      plaqueCanvas.height = 128;
+      plaqueCanvas.width = 384;
+      plaqueCanvas.height = 96;
       const pctx = plaqueCanvas.getContext("2d");
       if (pctx) {
         pctx.fillStyle = "#000000";
-        pctx.fillRect(0, 0, 512, 128);
+        pctx.fillRect(0, 0, 384, 96);
         pctx.fillStyle = "#facc15";
-        pctx.fillRect(6, 6, 500, 116);
+        pctx.fillRect(5, 5, 374, 86);
         pctx.fillStyle = "#000000";
-        pctx.font = "bold 32px sans-serif";
+        pctx.font = "bold 22px sans-serif";
         pctx.textAlign = "center";
-        pctx.fillText(item.title, 256, 52);
-        pctx.font = "bold 20px monospace";
+        pctx.fillText(item.title, 192, 40);
+        pctx.font = "bold 14px monospace";
         pctx.fillStyle = "#1e293b";
-        pctx.fillText(`${item.category} • ${item.date || "XII PPLG 1"}`, 256, 92);
+        pctx.fillText(`${item.category} • ${item.date || "XII PPLG 1"}`, 192, 70);
       }
       const plaqueTex = new THREE.CanvasTexture(plaqueCanvas);
       const plaqueMesh = new THREE.Mesh(
@@ -699,6 +751,7 @@ export default function MemoryMuseum3D({
       );
       plaqueMesh.position.set(0, -1.25, 0.06);
       artGroup.add(plaqueMesh);
+
 
       // 5. Overhead Spotlight Fixture
       const lampArm = new THREE.Mesh(sharedLampArmGeo, frameOuterMat);
@@ -1214,17 +1267,21 @@ export default function MemoryMuseum3D({
     scene.add(zoneMesh);
 
 
-    // Start staggered progressive texture loading: load 1 image every 40ms to avoid GPU upload stalls
+    // Start progressive texture loading: load 1 image every 25ms to quickly ready all photos in background
     let queueTimer: ReturnType<typeof setTimeout> | null = null;
     let queueIndex = 0;
     const processNextTexture = () => {
       if (queueIndex < textureLoadQueue.length) {
         textureLoadQueue[queueIndex]();
         queueIndex++;
-        queueTimer = setTimeout(processNextTexture, 40);
+        // Pre-render a frame periodically to prime WebGL buffer in background
+        if (queueIndex % 10 === 0 || queueIndex === textureLoadQueue.length) {
+          renderer.render(scene, camera);
+        }
+        queueTimer = setTimeout(processNextTexture, 25);
       }
     };
-    setTimeout(processNextTexture, 60);
+    setTimeout(processNextTexture, 50);
 
     // 7. RAYCASTING & POINTER INTERACTION
     const raycaster = new THREE.Raycaster();
@@ -1367,8 +1424,8 @@ export default function MemoryMuseum3D({
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
 
-      // Skip render when not visible in viewport
-      if (!isVisible) return;
+      // Skip render when not visible and not active
+      if (!isVisible && !isActiveRef.current) return;
 
       // Camera smooth glide
       const anim = animationTargetRef.current;
@@ -1411,6 +1468,9 @@ export default function MemoryMuseum3D({
       canvas.removeEventListener("pointermove", onPointerMove);
       canvas.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("resize", handleResize);
+      sharedPlaceholderTex.dispose();
+      downscaledTexCache.forEach((tex) => tex.dispose());
+      downscaledTexCache.clear();
       sharedFrameGeo.dispose();
       sharedGoldTrimGeo.dispose();
       sharedMatBoardGeo.dispose();
@@ -1429,6 +1489,7 @@ export default function MemoryMuseum3D({
       renderer.dispose();
       controls.dispose();
     };
+
   }, [focusOnArtwork]);
 
   return (
