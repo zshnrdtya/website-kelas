@@ -1,5 +1,5 @@
 "use client";
-import { classInfo } from "../data/mockData";
+import { classInfo } from "../data/classData";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Monitor, Image as ImageIcon } from "lucide-react";

@@ -1,5 +1,5 @@
 "use client";
-import { structureData } from "../data/mockData";
+import { structureData, type StructureItem } from "../data/classData";
 import { motion } from "framer-motion";
 
 export default function StructureTimeline() {
@@ -65,7 +65,7 @@ export default function StructureTimeline() {
   );
 }
 
-function StructureCard({ item, bgColor, rotation, isLeft }: { item: any, bgColor: string, rotation: string, isLeft: boolean }) {
+function StructureCard({ item, bgColor, rotation, isLeft }: { item: StructureItem; bgColor: string; rotation: string; isLeft: boolean }) {
   const xOffset = isLeft ? -100 : 100;
   
   return (

@@ -74,7 +74,9 @@ export default function MusicPlayer() {
             setIsPlaying(true);
             fadeInAudio(audio, 0.45, 2000);
           })
-          .catch(() => {});
+          .catch(() => {
+            setIsPlaying(false);
+          });
       }
     };
 
@@ -105,7 +107,9 @@ export default function MusicPlayer() {
               setIsPlaying(true);
               fadeInAudio(audio, 0.45, 1500);
             })
-            .catch(() => {});
+            .catch(() => {
+              setIsPlaying(false);
+            });
         }
       }
     };
@@ -131,7 +135,9 @@ export default function MusicPlayer() {
             setIsPlaying(true);
             fadeInAudio(audio, 0.45, 1500);
           })
-          .catch(() => {});
+          .catch(() => {
+            setIsPlaying(false);
+          });
       }
     };
 
@@ -174,7 +180,9 @@ export default function MusicPlayer() {
           setIsPlaying(true);
           fadeInAudio(audio, 0.45, 1500);
         })
-        .catch(() => {});
+        .catch(() => {
+          setIsPlaying(false);
+        });
     }
   };
 
@@ -192,6 +200,7 @@ export default function MusicPlayer() {
       <motion.button
         type="button"
         onClick={toggleMusic}
+        aria-label={isPlaying ? "Matikan Lagu (Pause)" : "Putar Lagu Rumah Kita"}
         initial={{ scale: 0.8, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 400, damping: 20 }}

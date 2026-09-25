@@ -179,7 +179,7 @@ Jika ingin melakukan pengembangan komponen baru, wajib mematuhi panduan desain N
 
 <div align="center">
   <br />
-  <strong>XII PPLG 1 — SMKN 1 DEPOK</strong><br />
-  <i>"Logic, Code, and Creativity — Berjuang bersama, maju bersama."</i><br />
+  <strong>XII PPLG 1 (SMKN 1 DEPOK)</strong><br />
+  <i>"Logic, Code, and Creativity : Berjuang bersama, maju bersama."</i><br />
   <a href="https://www.instagram.com/12pplg1_/">@12pplg1_</a>
 </div>

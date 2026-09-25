@@ -3,14 +3,12 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { memoriesData, type MemoryItem } from "../data/mockData";
+import { memoriesData, type MemoryItem } from "../data/classData";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Landmark,
-  Compass,
   Play,
   Pause,
-  ZoomIn,
   ChevronLeft,
   ChevronRight,
   RotateCw,
@@ -28,14 +26,12 @@ import {
 interface MemoryMuseum3DProps {
   onOpenLightbox?: (index: number) => void;
   selectedCategory?: string;
-  onCategoryChange?: (cat: string) => void;
   isActive?: boolean;
 }
 
 export default function MemoryMuseum3D({
   onOpenLightbox,
   selectedCategory = "All",
-  onCategoryChange,
   isActive = true,
 }: MemoryMuseum3DProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -156,7 +152,7 @@ export default function MemoryMuseum3D({
   }, [animateCameraTo]);
 
   // Preset view handlers
-  const handlePresetView = (preset: "hall" | "k10" | "k11" | "center" | "dashboard") => {
+  const handlePresetView = useCallback((preset: "hall" | "k10" | "k11" | "center" | "dashboard") => {
     if (isWalkModeRef.current) {
       setIsWalkMode(false);
       isWalkModeRef.current = false;
@@ -185,7 +181,19 @@ export default function MemoryMuseum3D({
     } else if (preset === "dashboard") {
       animateCameraTo(new THREE.Vector3(9.0, 2.4, -8.9), new THREE.Vector3(9.0, 2.4, -13.75));
     }
-  };
+  }, [animateCameraTo, isAutoRotating]);
+
+  // Keyboard Escape key handler to close modal (R-32, R-26)
+  useEffect(() => {
+    if (!selectedMemory) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedMemory(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedMemory]);
 
   // Step through artworks
   const handleNextArtwork = () => {
@@ -1158,7 +1166,6 @@ export default function MemoryMuseum3D({
     // 6. 3D PICTURE FRAMES & ARTWORK MOUNTING
     const interactiveMeshes: THREE.Mesh[] = [];
     const artMap = new Map<string, { frame: THREE.Mesh; camPos: THREE.Vector3; lookPos: THREE.Vector3 }>();
-    const textureLoader = new THREE.TextureLoader();
 
     // Reusable Materials for Art Frames
     const frameOuterMat = new THREE.MeshStandardMaterial({
@@ -1756,7 +1763,7 @@ export default function MemoryMuseum3D({
       dctx.fillText("SLOGAN ANGKATAN:", 36, 725);
       dctx.fillStyle = "#ffffff";
       dctx.font = "italic 15px sans-serif";
-      dctx.fillText("“Logic, Code, and Creativity — Berjuang bersama, maju bersama.”", 185, 725);
+      dctx.fillText("“Logic, Code, and Creativity : Berjuang bersama, maju bersama.”", 185, 725);
 
       dctx.fillStyle = "#38bdf8";
       dctx.font = "bold 12px monospace";
@@ -2161,7 +2168,7 @@ export default function MemoryMuseum3D({
       controls.dispose();
     };
 
-  }, [focusOnArtwork]);
+  }, [focusOnArtwork, handlePresetView]);
 
   return (
     <div className="w-full relative">

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { classroomSeatingData, type ClassroomStudent } from "../data/mockData";
+import { classroomSeatingData, type ClassroomStudent } from "../data/classData";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Monitor,
@@ -36,7 +36,6 @@ export default function Classroom3D() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"orbit" | "top" | "teacher" | "back">("orbit");
   const [isAutoRotating, setIsAutoRotating] = useState(false);
-  const [isSceneReady, setIsSceneReady] = useState(false);
   const [isWalkMode, setIsWalkMode] = useState(false);
   const isWalkModeRef = useRef(false);
   const keysPressedRef = useRef<Record<string, boolean>>({});
@@ -126,6 +125,19 @@ export default function Classroom3D() {
       handlePresetView("orbit");
     }
   };
+
+  // Keyboard Escape key handler to close modals (R-32, R-26)
+  useEffect(() => {
+    if (!selectedStudent && !isTeacherSelected) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedStudent(null);
+        setIsTeacherSelected(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedStudent, isTeacherSelected]);
 
   // Preset camera handlers
   const handlePresetView = (mode: "orbit" | "top" | "teacher" | "back") => {
@@ -1206,7 +1218,7 @@ export default function Classroom3D() {
 
     teacherDeskGroup.add(tChairGroup);
 
-    // --- 7B. 3D FEMALE TEACHER ASSET: BU HILDA RAHMAWATI, S.KOM (WALI KELAS) ---
+    // 3D teacher figure: Bu Hilda Rahmawati, S.Kom (Wali Kelas)
     const teacherFigure = new THREE.Group();
     teacherFigure.position.set(0, 0, -9.2);
     teacherFigure.userData = { isTeacher: true };
@@ -1406,8 +1418,6 @@ export default function Classroom3D() {
     const monitorBezelMat = new THREE.MeshStandardMaterial({ color: 0x090d16 });
 
     const screenGeo = new THREE.PlaneGeometry(0.88, 0.55);
-    // Colorful glowing terminal screens (blue, green, yellow, purple)
-    const screenColors = [0x38bdf8, 0x4ade80, 0xfacc15, 0xc084fc, 0x22d3ee];
 
     const standBaseGeo = new THREE.BoxGeometry(0.35, 0.03, 0.28);
     const standNeckGeo = new THREE.BoxGeometry(0.08, 0.25, 0.06);
@@ -1645,7 +1655,7 @@ export default function Classroom3D() {
 
       deskGroup.add(chairGroup);
 
-      // --- 3D SITTING STUDENT FIGURE (COWO / CEWE) ---
+      // 3D student figure
       const figureGroup = new THREE.Group();
       figureGroup.position.set(0, 0, 0.85);
 
@@ -1714,7 +1724,7 @@ export default function Classroom3D() {
 
       // 3. Gender-Specific Hair / Hijab Styling
       if (!isGirl) {
-        // --- COWO (BOY): Short stylish haircut ---
+        // Boy hair styling
         const hairMat = new THREE.MeshStandardMaterial({
           color: 0x171717, // Jet black hair
           roughness: 0.8,
@@ -1735,7 +1745,7 @@ export default function Classroom3D() {
         fringe.position.set(0, 1.58, -0.14);
         figureGroup.add(fringe);
       } else {
-        // --- CEWE (GIRL): Elegant Hijab Putih SMK ---
+        // Girl hijab styling
         const hijabMat = new THREE.MeshStandardMaterial({
           color: 0xf1f5f9, // Pristine white SMK hijab
           roughness: 0.4,
@@ -1797,7 +1807,7 @@ export default function Classroom3D() {
       figureGroup.add(pelvis);
 
       if (!isGirl) {
-        // --- COWO: Celana Abu/Navy & Sepatu ---
+        // Boy pants and shoes
         const thighGeo = new THREE.BoxGeometry(0.18, 0.16, 0.38);
         const leftThigh = new THREE.Mesh(thighGeo, uniformBottomMat);
         leftThigh.position.set(-0.13, 0.66, -0.21);
@@ -1829,7 +1839,7 @@ export default function Classroom3D() {
         rightShoe.position.set(0.13, 0.06, -0.42);
         figureGroup.add(rightShoe);
       } else {
-        // --- CEWE: Rok Panjang SMK & Sepatu ---
+        // Girl skirt and shoes
         const skirtGeo = new THREE.BoxGeometry(0.48, 0.58, 0.48);
         const skirt = new THREE.Mesh(skirtGeo, uniformBottomMat);
         skirt.position.set(0, 0.42, -0.16);
@@ -1853,7 +1863,6 @@ export default function Classroom3D() {
     });
 
     deskMeshesRef.current = deskMap;
-    setIsSceneReady(true);
 
     // 9. RAYCASTING & INTERACTIVE POINTER DRAG HANDLING
     const raycaster = new THREE.Raycaster();
@@ -2189,12 +2198,12 @@ export default function Classroom3D() {
                   placeholder="Cari nama siswa (misal: Jonni)..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white text-black text-xs sm:text-sm font-bold pl-9 pr-3 py-1.5 sm:py-2 border-2 sm:border-3 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:outline-none placeholder:text-neutral-500"
+                  className="w-full bg-white text-black text-xs sm:text-sm font-bold pl-9 pr-3 py-1.5 sm:py-2 border-2 sm:border-3 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:ring-2 focus:ring-black placeholder:text-neutral-500"
                 />
               </div>
 
               {/* Autocomplete Dropdown */}
-              {filteredStudents.length > 0 && (
+              {searchQuery.trim() !== "" && filteredStudents.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-h-48 overflow-y-auto z-50">
                   {filteredStudents.map((student) => (
                     <button
@@ -2212,6 +2221,15 @@ export default function Classroom3D() {
                       <span className="text-[10px] text-neutral-600 uppercase">{student.role}</span>
                     </button>
                   ))}
+                </div>
+              )}
+
+              {/* Empty State when no student found (R-27) */}
+              {searchQuery.trim() !== "" && filteredStudents.length === 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border-3 border-black p-3 text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] z-50">
+                  <p className="text-xs font-bold text-neutral-700">
+                    Siswa &quot;{searchQuery}&quot; tidak ditemukan.
+                  </p>
                 </div>
               )}
             </div>

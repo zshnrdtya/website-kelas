@@ -50,24 +50,24 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Actions: Instagram Icon Button + Hamburger Menu Toggle */}
-          <div className="flex md:hidden items-center gap-2">
+          <div className="flex md:hidden items-center gap-2.5">
             <a
               href="https://www.instagram.com/12pplg1_/"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram Kelas XII PPLG 1"
-              className="p-2 bg-neo-yellow text-black border-2 border-black font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-black hover:text-white transition-all cursor-pointer flex items-center justify-center"
+              className="w-11 h-11 min-w-[44px] min-h-[44px] bg-neo-yellow text-black border-2 border-black font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-black hover:text-white transition-all cursor-pointer flex items-center justify-center shrink-0"
             >
-              <InstagramIcon className="w-4 h-4 shrink-0" />
+              <InstagramIcon className="w-5 h-5 shrink-0" />
             </a>
 
             <button
               type="button"
               onClick={() => setIsOpen(!isOpen)}
               aria-label={isOpen ? "Tutup Menu Navigasi" : "Buka Menu Navigasi"}
-              className="p-2 bg-black text-neo-yellow border-2 border-black font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-neutral-800 transition-all cursor-pointer flex items-center justify-center"
+              className="w-11 h-11 min-w-[44px] min-h-[44px] bg-black text-neo-yellow border-2 border-black font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-neutral-800 transition-all cursor-pointer flex items-center justify-center shrink-0"
             >
-              {isOpen ? <X className="w-5 h-5 stroke-[3]" /> : <Menu className="w-5 h-5 stroke-[3]" />}
+              {isOpen ? <X className="w-6 h-6 stroke-[3]" /> : <Menu className="w-6 h-6 stroke-[3]" />}
             </button>
           </div>
 

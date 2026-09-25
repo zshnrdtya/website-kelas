@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { memoriesData } from "../data/mockData";
+import { memoriesData } from "../data/classData";
 import MemoryMuseum3D from "./MemoryMuseum3D";
 import { Landmark, LayoutGrid, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -62,11 +62,15 @@ export default function Gallery() {
 
   // Keyboard navigation for lightbox (Escape, ArrowLeft, ArrowRight)
   useEffect(() => {
+    if (selectedIndex === null) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (selectedIndex === null) return;
-      if (e.key === "Escape") setSelectedIndex(null);
-      if (e.key === "ArrowLeft") handlePrev();
-      if (e.key === "ArrowRight") handleNext();
+      if (e.key === "Escape") {
+        setSelectedIndex(null);
+      } else if (e.key === "ArrowLeft") {
+        setSelectedIndex((prev) => (prev !== null && prev > 0 ? prev - 1 : prev));
+      } else if (e.key === "ArrowRight") {
+        setSelectedIndex((prev) => (prev !== null && prev < activeList.length - 1 ? prev + 1 : prev));
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -159,7 +163,6 @@ export default function Gallery() {
             isActive={galleryMode === "3d"}
             onOpenLightbox={(idx) => setSelectedIndex(idx)}
             selectedCategory={activeCategory}
-            onCategoryChange={(cat) => handleCategoryChange(cat)}
           />
         </div>
 
@@ -203,7 +206,7 @@ export default function Gallery() {
                     setVisibleCount(ITEMS_PER_LOAD);
                   }}
                   placeholder="Cari momen foto (judul, tanggal, dll)..."
-                  className="w-full bg-neo-white text-black font-bold text-sm sm:text-base px-4 py-3 pl-11 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:translate-x-0.5 focus:translate-y-0.5 outline-none transition-all placeholder:text-neutral-500"
+                  className="w-full bg-neo-white text-black font-bold text-sm sm:text-base px-4 py-3 pl-11 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:translate-x-0.5 focus:translate-y-0.5 focus:ring-2 focus:ring-black transition-all placeholder:text-neutral-500"
                 />
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-600 w-5 h-5 pointer-events-none" />
                 {searchQuery && (

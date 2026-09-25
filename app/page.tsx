@@ -7,7 +7,7 @@ import Gallery from "../src/components/Gallery";
 import BackToTop from "../src/components/BackToTop";
 import MusicPlayer from "../src/components/MusicPlayer";
 import InstagramIcon from "../src/components/InstagramIcon";
-import { classStudentNames } from "../src/data/mockData";
+import { classStudentNames } from "../src/data/classData";
 
 export default function Home() {
   return (

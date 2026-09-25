@@ -44,3 +44,10 @@ body {
   background: var(--color-neo-yellow);
   color: #000;
 }
+
+/* High-contrast Neobrutalist keyboard focus ring (WCAG AA compliant: R-32) */
+:focus-visible {
+  outline: 3px solid #000000 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px var(--color-neo-yellow) !important;
+}

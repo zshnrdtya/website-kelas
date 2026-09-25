@@ -7,3 +7,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+<!-- antislop:start -->
+## antislop
+For UI, copy, people, mobile layout, logic/architecture, or code comments work, read `DESIGN.md` for direction, then `Rules-Raditya CODE/skills/antislop/SKILL.md` (core) and the relevant skill:
+- UI / visual: `Rules-Raditya CODE/skills/antislop-ui/SKILL.md`
+- Copy & text: `Rules-Raditya CODE/skills/antislop-copywriting/SKILL.md`
+- People & accessibility: `Rules-Raditya CODE/skills/antislop-human/SKILL.md`
+- Mobile / responsive: `Rules-Raditya CODE/skills/antislop-layoutmobile/SKILL.md`
+- Logic & architecture: `Rules-Raditya CODE/skills/antislop-logic/SKILL.md`
+- Code comments: `Rules-Raditya CODE/skills/antislop-code/SKILL.md`
+Before starting, follow the rules and verify with the Delivery Gate.
+<!-- antislop:end -->
