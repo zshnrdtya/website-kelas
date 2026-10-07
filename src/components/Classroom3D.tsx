@@ -269,50 +269,86 @@ export default function Classroom3D() {
     gridHelper.position.set(0, 0.01, 5.5);
     scene.add(gridHelper);
 
-    // 5A. WALLS (FRONT, LEFT, RIGHT, BACK)
-    // Front Wall (Behind Whiteboard)
-    const wallGeo = new THREE.PlaneGeometry(32, 10);
-    const wallMat = new THREE.MeshStandardMaterial({
-      color: 0x182234,
-      roughness: 0.85,
-    });
-    const frontWall = new THREE.Mesh(wallGeo, wallMat);
-    frontWall.position.set(0, 5, -12);
-    frontWall.receiveShadow = true;
-    scene.add(frontWall);
-
-    // Left & Right Architectural Walls (Facing Inward - FrontSide Culling)
-    const sideWallGeo = new THREE.PlaneGeometry(35, 10);
-    const sideWallMat = new THREE.MeshStandardMaterial({
-      color: 0x151d2c,
-      roughness: 0.9,
-      side: THREE.FrontSide, // Invisible when viewed from outside
+    // 5A. DUAL-TONE WALLS (FRONT, LEFT, RIGHT, BACK — REALISTIS LAB KOMPUTER SMK)
+    // Desain arsitektural dual-tone: Dinding bawah Navy Lab tahan noda, dado rail pembatas hitam & kuning neobrutal, serta dinding atas putih bersih lab
+    const wallUpperMat = new THREE.MeshStandardMaterial({
+      color: 0xf8fafc, // Putih bersih reflektif khas dinding lab sekolah
+      roughness: 0.88,
+      metalness: 0.02,
+      side: THREE.FrontSide, // Invisible dari luar untuk sudut pandang orbit 360
     });
 
-    const leftWall = new THREE.Mesh(sideWallGeo, sideWallMat);
-    leftWall.position.set(-15.5, 5, 5.5);
-    leftWall.rotation.y = Math.PI / 2;
-    leftWall.receiveShadow = true;
-    scene.add(leftWall);
-
-    const rightWall = new THREE.Mesh(sideWallGeo, sideWallMat);
-    rightWall.position.set(15.5, 5, 5.5);
-    rightWall.rotation.y = -Math.PI / 2;
-    rightWall.receiveShadow = true;
-    scene.add(rightWall);
-
-    // Back Wall (Facing Inward - Invisible when viewed from outside rear Z > 23)
-    const backWallGeo = new THREE.PlaneGeometry(32, 10);
-    const backWallMat = new THREE.MeshStandardMaterial({
-      color: 0x151d2c,
-      roughness: 0.9,
-      side: THREE.FrontSide, // Invisible when looking into room from behind back wall
+    const wallLowerMat = new THREE.MeshStandardMaterial({
+      color: 0x1e3a8a, // Deep Navy Lab khas cat minyak dinding bawah lab komputer kejuruan
+      roughness: 0.82,
+      metalness: 0.05,
+      side: THREE.FrontSide,
     });
-    const backWall = new THREE.Mesh(backWallGeo, backWallMat);
-    backWall.position.set(0, 5, 23);
-    backWall.rotation.y = Math.PI; // Normal points inward (0, 0, -1)
-    backWall.receiveShadow = true;
-    scene.add(backWall);
+
+    const wallTrimBlackMat = new THREE.MeshStandardMaterial({
+      color: 0x05070d, // Lis hitam solid neobrutal
+      roughness: 0.6,
+      side: THREE.FrontSide,
+    });
+
+    const wallTrimYellowMat = new THREE.MeshStandardMaterial({
+      color: 0xe5de00, // Aksen pita kuning elektrik khas identitas XII PPLG 1
+      roughness: 0.4,
+      emissive: 0x3d3a00,
+      side: THREE.FrontSide,
+    });
+
+    const createDualToneWall = (width: number, posX: number, posZ: number, rotY: number) => {
+      const wallGroup = new THREE.Group();
+      wallGroup.position.set(posX, 0, posZ);
+      wallGroup.rotation.y = rotY;
+
+      // 1. Dinding Bawah (Wainscoting cat lab tahan noda: 0 s/d 2.5m)
+      const lowerGeo = new THREE.PlaneGeometry(width, 2.5);
+      const lowerMesh = new THREE.Mesh(lowerGeo, wallLowerMat);
+      lowerMesh.position.set(0, 1.25, 0);
+      lowerMesh.receiveShadow = true;
+      wallGroup.add(lowerMesh);
+
+      // 2. Baseboard / Plint Lantai (Hitam pekat neobrutal: 0 s/d 0.14m)
+      const baseboardGeo = new THREE.PlaneGeometry(width, 0.14);
+      const baseboardMesh = new THREE.Mesh(baseboardGeo, wallTrimBlackMat);
+      baseboardMesh.position.set(0, 0.07, 0.008);
+      wallGroup.add(baseboardMesh);
+
+      // 3. Neobrutal Dado Rail (Garis pembatas lis hitam & pita aksen kuning elektrik)
+      const trimBlackGeo = new THREE.PlaneGeometry(width, 0.10);
+      const trimBlackMesh = new THREE.Mesh(trimBlackGeo, wallTrimBlackMat);
+      trimBlackMesh.position.set(0, 2.50, 0.008);
+      wallGroup.add(trimBlackMesh);
+
+      const trimYellowGeo = new THREE.PlaneGeometry(width, 0.035);
+      const trimYellowMesh = new THREE.Mesh(trimYellowGeo, wallTrimYellowMat);
+      trimYellowMesh.position.set(0, 2.55, 0.012);
+      wallGroup.add(trimYellowMesh);
+
+      // 4. Dinding Atas (Putih terang reflektif: 2.55 s/d 10m)
+      const upperGeo = new THREE.PlaneGeometry(width, 7.45);
+      const upperMesh = new THREE.Mesh(upperGeo, wallUpperMat);
+      upperMesh.position.set(0, 6.275, 0);
+      upperMesh.receiveShadow = true;
+      wallGroup.add(upperMesh);
+
+      return wallGroup;
+    };
+
+    // Pasang keempat sisi dinding dengan orientasi menghadap ke dalam ruangan:
+    // Dinding Depan (Lebar 32m, Z: -12, menghadap +Z)
+    scene.add(createDualToneWall(32, 0, -12, 0));
+
+    // Dinding Kiri (Panjang 35m, X: -15.5, Z center: 5.5, menghadap +X)
+    scene.add(createDualToneWall(35, -15.5, 5.5, Math.PI / 2));
+
+    // Dinding Kanan (Panjang 35m, X: 15.5, Z center: 5.5, menghadap -X)
+    scene.add(createDualToneWall(35, 15.5, 5.5, -Math.PI / 2));
+
+    // Dinding Belakang (Lebar 32m, Z: 23, menghadap -Z)
+    scene.add(createDualToneWall(32, 0, 23, Math.PI));
 
     // 5B. ADAPTIVE CEILING (ATAP PLAFON PINTAR)
     // Uses THREE.FrontSide with downward normal:
